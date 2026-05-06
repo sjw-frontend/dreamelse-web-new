@@ -1,0 +1,124 @@
+@import 'tailwindcss';
+
+@theme inline {
+    /* Z-index scale — generates z-hide, z-lowest, z-low, z-medium, z-high, z-highest, z-max */
+    --z-index-hide:    -5;
+    --z-index-lowest:  0;
+    --z-index-low:     1;
+    --z-index-medium:  10;
+    --z-index-high:    20;
+    --z-index-highest: 30;
+    --z-index-max:     9999;
+
+    /* Colors — reference the raw design tokens defined in :root below */
+    --color-bg-page:          var(--raw-color-bg-page);
+    --color-bg-card:          var(--raw-color-bg-card);
+    --color-bg-input:         var(--raw-color-bg-input);
+    --color-bg-elevated:      var(--raw-color-bg-elevated);
+    --color-bg-toast:         var(--raw-color-bg-toast);
+    --color-bg-secondary:     var(--raw-color-bg-secondary);
+    --color-bg-tertiary:      var(--raw-color-bg-tertiary);
+    --color-bg-placeholder:   var(--raw-color-bg-placeholder);
+    --color-bg-grabber:       var(--raw-color-bg-grabber);
+    --color-text-primary:     var(--raw-color-text-primary);
+    --color-text-secondary:   var(--raw-color-text-secondary);
+    --color-text-tertiary:    var(--raw-color-text-tertiary);
+    --color-text-quaternary:  var(--raw-color-text-quaternary);
+    --color-text-placeholder: var(--raw-color-text-placeholder);
+    --color-text-section:     var(--raw-color-text-section);
+    --color-text-on-accent:   var(--raw-color-text-on-accent);
+    --color-accent:           var(--raw-color-accent);
+    --color-danger:           var(--raw-color-danger);
+    --color-danger-strong:    var(--raw-color-danger-strong);
+    --color-danger-soft:      var(--raw-color-danger-soft);
+    --color-purple:           var(--raw-color-purple);
+    --color-border-default:   var(--raw-color-border);
+    --color-divider:          var(--raw-color-divider);
+    --color-overlay:          var(--raw-color-overlay);
+    --color-glass-bg:         var(--raw-color-glass-bg);
+
+    /* Font families */
+    --font-family-sans:    'MiSans', 'Inter', sans-serif;
+    --font-family-display: 'MiSans', 'Inter', sans-serif;
+
+    /* Font sizes */
+    --font-size-xs:   11px;
+    --font-size-sm:   12px;
+    --font-size-base: 14px;
+    --font-size-md:   15px;
+    --font-size-lg:   16px;
+    --font-size-xl:   18px;
+    --font-size-2xl:  20px;
+    --font-size-3xl:  24px;
+    --font-size-4xl:  28px;
+
+    /* Heights */
+    --height-navbar: var(--raw-navbar-height);
+}
+
+@font-face {
+    font-family: 'MiSans';
+    src: url('/assets/fonts/misans.ttf') format('truetype');
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Syst';
+    src: url('/assets/fonts/syst.otf') format('opentype');
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+:root {
+    --raw-color-bg-page:        #0D0D0D;
+    --raw-color-bg-card:        #1A1A1A;
+    --raw-color-bg-input:       #222222;
+    --raw-color-bg-elevated:    #1A1A1A;
+    --raw-color-bg-toast:       #393939;
+    --raw-color-bg-secondary:   #252525;
+    --raw-color-bg-tertiary:    #2A2A2A;
+    --raw-color-bg-placeholder: #333333;
+    --raw-color-bg-grabber:     #444444;
+
+    --raw-color-text-primary:    #EDEDED;
+    --raw-color-text-secondary:  #A0A0A0;
+    --raw-color-text-tertiary:   #888888;
+    --raw-color-text-quaternary: #777777;
+    --raw-color-text-placeholder:#666666;
+    --raw-color-text-section:    #B0B0B0;
+    --raw-color-text-on-accent:  #000000;
+
+    --raw-color-accent:          #ABFF1A;
+    --raw-color-danger:          #FF4444;
+    --raw-color-danger-strong:   #FF5555;
+    --raw-color-danger-soft:     #FF8A82;
+    --raw-color-purple:          #B47AFF;
+
+    --raw-color-border:          rgba(255,255,255,0.08);
+    --raw-color-divider:         rgba(255,255,255,0.06);
+    --raw-color-overlay:         rgba(0,0,0,0.65);
+    --raw-color-glass-bg:        rgba(255,255,255,0.08);
+
+    --raw-navbar-height: 48px;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    background-color: var(--color-bg-page);
+    color: var(--color-text-primary);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }

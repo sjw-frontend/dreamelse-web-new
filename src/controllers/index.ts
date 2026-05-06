@@ -1,0 +1,9 @@
+export { UserController } from './user/user-controller';
+export { AppController } from './app/app-controller';
+export { RouterController } from './router/router-controller';
+export { PermissionController } from './permission/permission-controller';
+export { DeviceController } from './device/device-controller';
+export { DramatizeController } from './dramatize/dramatize-controller';
+export { ScriptController } from './script/script-controller';
+export { WorldLineController } from './world-line/world-line-controller';
+export { CharacterController } from './character/character-controller';
