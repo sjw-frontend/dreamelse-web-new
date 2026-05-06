@@ -156,6 +156,11 @@ export class ScriptPreparePlayController extends BaseRenderController<
 
     // 扮演角色
     public readonly playAsRole = () => {
+        console.log('[PreparePlay] playAsRole', {
+            scriptId: this.internal.data?.id,
+            selectedRoleId: this.internal.selectedRoleId,
+            allowPlay: this.internal.allowPlay,
+        });
         this.#routerController.replace(
             RouterEnums.RouteName.PlayScript,
             {
@@ -166,6 +171,10 @@ export class ScriptPreparePlayController extends BaseRenderController<
 
     // 扮演上帝
     public readonly playAsGod = () => {
+        console.log('[PreparePlay] playAsGod', {
+            scriptId: this.internal.data?.id,
+            allowPlay: this.internal.allowPlay,
+        });
         this.#routerController.replace(
             RouterEnums.RouteName.PlayScript,
             {

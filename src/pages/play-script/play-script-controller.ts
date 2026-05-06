@@ -91,7 +91,7 @@ export class PlayScriptController extends BaseRenderController<
         this.#fileService = fileService;
 
         this.#watch();
-        this.#init();
+        // #init() moved to setRelatedControllers — route params not available in constructor on web
     }
 
     readonly #apiService;
@@ -147,20 +147,32 @@ export class PlayScriptController extends BaseRenderController<
         this.#ctx.activePlayId = activePlayId?.toString() ?? null;
         this.#ctx.selectRoleId = selectRoleId?.toString() ?? null;
         this.#ctx.nextCursor = nextCursor?.toString() ?? null;
+
+        console.log('[PlayScript] #init', {
+            scriptId: this.#ctx.scriptId,
+            selectRoleId: this.#ctx.selectRoleId,
+            activePlayId: this.#ctx.activePlayId,
+            nextCursor: this.#ctx.nextCursor,
+            rawIds: this.internal.route?.params?.ids,
+        });
     }
 
     async #start() {
+        console.log('[PlayScript] #start begin', { scriptId: this.#ctx.scriptId });
         try {
             if (this.#ctx.scriptId != null) {
                 let scriptInfo = this.#scriptController.getScript(
                     this.#ctx.scriptId,
                 );
+                console.log('[PlayScript] scriptInfo from cache', !!scriptInfo);
 
                 scriptInfo ??= await this.#scriptController.requestPlayDetails(
                     this.#ctx.scriptId,
                 );
-
-                this.internal.title = scriptInfo.state.title;
+                console.log('[PlayScript] scriptInfo loaded', {
+                    title: scriptInfo?.state.title,
+                    rolesCount: scriptInfo?.state.roles?.length,
+                });
 
                 if (this.#ctx.selectRoleId != null) {
                     if (scriptInfo.state.roles == null) {
@@ -185,6 +197,7 @@ export class PlayScriptController extends BaseRenderController<
                 let playId;
 
                 if (this.#ctx.activePlayId == null) {
+                    console.log('[PlayScript] calling play.start', { script_id: this.#ctx.scriptId });
                     const startRes = await this.#apiService.call.play.start(
                         {
                             script_id: this.#ctx.scriptId,
@@ -212,6 +225,7 @@ export class PlayScriptController extends BaseRenderController<
                     );
 
                     playId = startRes.play_id;
+                    console.log('[PlayScript] play.start success', { playId });
 
                     this.#scriptController.setScriptAttr(
                         this.#ctx.scriptId,
@@ -238,8 +252,10 @@ export class PlayScriptController extends BaseRenderController<
                 }
 
                 let bg: ApiTypes.Protocol.Media | null = null;
+                console.log('[PlayScript] calling dramatizeEngineCtrl.startPlay', { playId, hasRelatedControllers: !!this.#relatedControllers });
                 this.#relatedControllers?.dramatizeEngineCtrl.startPlay({
                     requestNarrativesCallback: async () => {
+                        console.log('[PlayScript] requestNarrativesCallback called', { playId, nextCursor: this.#ctx.nextCursor });
                         const res = await this.#apiService.call.play.query_next(
                             {
                                 play_id: playId,
@@ -251,6 +267,11 @@ export class PlayScriptController extends BaseRenderController<
                         );
 
                         this.#ctx.nextCursor = res.next_cursor;
+                        console.log('[PlayScript] query_next result', {
+                            narrativesCount: res.narratives?.length,
+                            hasMore: res.has_more,
+                            nextCursor: res.next_cursor,
+                        });
 
                         if (bg == null && this.#ctx.scriptId != null) {
                             bg =
@@ -305,6 +326,7 @@ export class PlayScriptController extends BaseRenderController<
                     },
                 });
 
+                console.log('[PlayScript] dramatizeEngineCtrl.startPlay called, playId=', playId);
                 this.internal.playId = playId;
             }
         } catch (e) {
@@ -347,6 +369,8 @@ export class PlayScriptController extends BaseRenderController<
     public readonly setRelatedControllers = (
         relatedControllers: RelatedControllers,
     ) => {
+        console.log('[PlayScript] setRelatedControllers called');
+        this.#init(); // route params available here on web
         this.#relatedControllers = relatedControllers;
         const { dramatizeEngineCtrl } = relatedControllers;
 

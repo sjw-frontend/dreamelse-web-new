@@ -46,8 +46,7 @@ export class PlayScriptOpeningController extends BaseRenderController<
         this.#fileService = fileService;
         this.#routerController = routerController;
         this.#scriptController = scriptController;
-
-        this.#init();
+        // #init() moved to setRelatedControllers — route params not available in constructor on web
     }
 
     readonly #apiService;
@@ -68,6 +67,12 @@ export class PlayScriptOpeningController extends BaseRenderController<
 
         this.#ctx.scriptId = scriptId?.toString() ?? null;
         this.#ctx.openingId = openingId?.toString() ?? null;
+
+        console.log('[PlayScriptOpening] #init', {
+            routeParams: this.internal.route?.params,
+            scriptId: this.#ctx.scriptId,
+            openingId: this.#ctx.openingId,
+        });
 
         if (this.#ctx.scriptId != null) {
             const scriptInfo = this.#scriptController.getScript(
@@ -133,6 +138,13 @@ export class PlayScriptOpeningController extends BaseRenderController<
     public readonly setRelatedControllers = (
         relatedControllers: RelatedControllers,
     ) => {
+        console.log('[PlayScriptOpening] setRelatedControllers START, route=', JSON.stringify(this.internal.route));
+        try {
+            this.#init();
+        } catch(e) {
+            console.error('[PlayScriptOpening] #init threw', e);
+        }
+        console.log('[PlayScriptOpening] after #init, scriptId=', this.#ctx.scriptId, 'openingId=', this.#ctx.openingId);
         this.#relatedControllers = relatedControllers;
         const { dramatizeEngineCtrl } = relatedControllers;
 

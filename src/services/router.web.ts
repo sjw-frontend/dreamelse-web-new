@@ -63,23 +63,55 @@ export class RouterService extends BaseService {
 
     public readonly callAction = (action: NavigationAction) => {
         if (!action || !_router) return;
+
+        // Convert RN-style { ids: [...], value: ... } params to TanStack Router params
+        // ids array is passed as search param so controllers can read it via route.params.ids
+        const buildNavParams = (routeName: string, rawParams: Record<string, unknown> = {}) => {
+            const path = routeNameToPath[routeName as RouterEnums.RouteName];
+            if (!path) return null;
+
+            // Extract path param names from path template (e.g. $playId, $scriptId)
+            const pathParamNames = (path.match(/\$[^/]+/g) ?? []).map(p => p.slice(1));
+
+            // ids array: map positionally to path params
+            const ids: unknown[] = Array.isArray(rawParams.ids) ? rawParams.ids : [];
+            const pathParams: Record<string, string> = {};
+            pathParamNames.forEach((name, i) => {
+                const val = ids[i] ?? rawParams[name];
+                if (val != null) pathParams[name] = String(val);
+            });
+
+            // Pass ids + value as search params so controllers can read them
+            const search: Record<string, string> = {};
+            if (ids.length > 0) search.ids = JSON.stringify(ids);
+            if (rawParams.value != null) search.value = String(rawParams.value);
+
+            return { path, pathParams, search };
+        };
+
         switch (action.type) {
             case 'NAVIGATE': {
-                const path = routeNameToPath[action.payload?.name as RouterEnums.RouteName];
-                if (path) void _router.navigate({ to: path, params: action.payload?.params as Record<string, string> });
+                const nav = buildNavParams(action.payload?.name ?? '', action.payload?.params as Record<string, unknown>);
+                if (nav) {
+                    console.log('[Router] NAVIGATE', action.payload?.name, nav);
+                    void _router.navigate({ to: nav.path, params: nav.pathParams, search: nav.search });
+                }
                 break;
             }
             case 'REPLACE': {
-                const path = routeNameToPath[action.payload?.name as RouterEnums.RouteName];
-                if (path) void _router.navigate({ to: path, params: action.payload?.params as Record<string, string>, replace: true });
+                const nav = buildNavParams(action.payload?.name ?? '', action.payload?.params as Record<string, unknown>);
+                if (nav) {
+                    console.log('[Router] REPLACE', action.payload?.name, nav);
+                    void _router.navigate({ to: nav.path, params: nav.pathParams, search: nav.search, replace: true });
+                }
                 break;
             }
             case 'RESET': {
                 const routes = action.payload?.routes;
                 const firstRoute = Array.isArray(routes) ? routes[0] : null;
                 if (firstRoute) {
-                    const path = routeNameToPath[firstRoute.name as RouterEnums.RouteName];
-                    if (path) void _router.navigate({ to: path, params: firstRoute.params as Record<string, string>, replace: true });
+                    const nav = buildNavParams(firstRoute.name, firstRoute.params as Record<string, unknown>);
+                    if (nav) void _router.navigate({ to: nav.path, params: nav.pathParams, search: nav.search, replace: true });
                 }
                 break;
             }
@@ -87,7 +119,6 @@ export class RouterService extends BaseService {
                 _router.history.back();
                 break;
             case 'PRELOAD':
-                // TanStack Router handles preloading automatically
                 break;
             default:
                 break;

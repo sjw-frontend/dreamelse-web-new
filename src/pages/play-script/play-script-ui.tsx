@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { DramatizeEngineController } from '$/component-controllers';
 import { useReactive, useRegisterRenderController } from '$/hooks';
 import { cn } from '$/utils/cn';
@@ -13,8 +13,8 @@ export const PlayScriptPage = optimize(() => {
     const [engineCtrl, EngineProvider] = useRegisterRenderController(DramatizeEngineController);
 
     // P0 fix: inject DramatizeEngineController — this triggers #start()
-    useMemo(() => {
-        console.log('[PlayScript] setRelatedControllers called');
+    useEffect(() => {
+        console.log('[PlayScript UI] useEffect: setRelatedControllers called');
         ctrl.setRelatedControllers({ dramatizeEngineCtrl: engineCtrl });
     }, []);
 
