@@ -276,7 +276,7 @@ export const Options: ReactTypes.FC<OptionsProps> = optimize(
                 )}
                 {/* inline text input (replaces ChatInput for play mode) */}
                 {showChatInput && reactiveState.play && (
-                    <div style={{ marginTop: 12, display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 24, padding: '8px 16px' }}>
+                    <div style={{ marginTop: 12, display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 24, padding: '8px 16px', backdropFilter: 'blur(60px)' }}>
                         <input
                             type="text"
                             value={inputText}

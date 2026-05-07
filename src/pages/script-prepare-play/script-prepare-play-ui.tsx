@@ -184,7 +184,6 @@ export const ScriptPreparePlayPage = optimize(() => {
                         ? ctrl.editRole(item.id)
                         : ctrl.selectRole(item.id)
                 }
-                // app: width:108, paddingHorizontal:4, paddingTop:4, borderRadius:16, height:240, borderWidth:2
                 className={cn(
                     'shrink-0 rounded-2xl border-2',
                 )}
@@ -195,11 +194,10 @@ export const ScriptPreparePlayPage = optimize(() => {
                     paddingRight: 4,
                     paddingTop: 4,
                     backgroundColor: 'rgba(255,255,255,0.15)',
-                    borderColor: isSelected ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0)',
+                    borderColor: isSelected ? '#1A1A1A' : 'rgba(255,255,255,0)',
                 }}
             >
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                    {/* roleImageContainer: width:100, height:140, borderRadius:12, overflow:hidden */}
                     <div
                         style={{
                             width: CARD_VIEW_W,
@@ -212,7 +210,6 @@ export const ScriptPreparePlayPage = optimize(() => {
                             alignItems: 'center',
                         }}
                     >
-                        {/* roleImageBg: absolute fill, rgba(255,255,255,0.06) */}
                         <div
                             style={{
                                 position: 'absolute',
@@ -234,7 +231,6 @@ export const ScriptPreparePlayPage = optimize(() => {
                                 }}
                             />
                         ) : (
-                            // app uses addLight asset (80×77); web fallback: same size placeholder
                             <div
                                 style={{
                                     width: 80,
@@ -254,14 +250,13 @@ export const ScriptPreparePlayPage = optimize(() => {
                         )}
                     </div>
 
-                    {/* roleInfo: alignItems:center, gap:2 */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: '100%' }}>
-                        {/* roleName: fontSize:18, fontWeight:600, color:white */}
+                        {/* roleName: fontSize:18, fontWeight:600, color:#1A1A1A */}
                         <span
                             style={{
                                 fontSize: 18,
                                 fontWeight: 600,
-                                color: 'rgba(255,255,255,1)',
+                                color: '#1A1A1A',
                                 textAlign: 'center',
                                 width: '100%',
                                 overflow: 'hidden',
@@ -271,14 +266,14 @@ export const ScriptPreparePlayPage = optimize(() => {
                         >
                             {displayName}
                         </span>
-                        {/* identities: fontSize:12, fontWeight:500, color:rgba(255,255,255,0.4) */}
+                        {/* identities: fontSize:12, fontWeight:500, color:rgba(26,26,26,0.4) */}
                         {displayIdentities.map((identity: ScriptTypes.Identity, idx: number) => (
                             <span
                                 key={idx}
                                 style={{
                                     fontSize: 12,
                                     fontWeight: 500,
-                                    color: 'rgba(255,255,255,0.4)',
+                                    color: 'rgba(26,26,26,0.4)',
                                     textAlign: 'center',
                                     width: '100%',
                                     overflow: 'hidden',
@@ -297,7 +292,6 @@ export const ScriptPreparePlayPage = optimize(() => {
 
     return (
         <RenderParentProvider>
-            {/* overlay: position absolute, fill, bgPage */}
             <div className="absolute inset-0 overflow-hidden bg-bg-page">
 
                 {/* backgroundContainer: absolute fill */}
@@ -313,7 +307,7 @@ export const ScriptPreparePlayPage = optimize(() => {
                     <div className="absolute inset-0" style={{ backgroundColor: 'rgba(255,255,255,0.4)' }} />
                 </div>
 
-                {/* closeButton: absolute top-right, 36×36 */}
+                {/* closeButton */}
                 <button
                     type="button"
                     onClick={ctrl.handleBack}
@@ -326,21 +320,17 @@ export const ScriptPreparePlayPage = optimize(() => {
                     </svg>
                 </button>
 
-                {/* content: relative, marginTop from safe area (pt-12 approximates insets.top) */}
                 <div className="relative flex flex-col h-full pt-12">
 
-                    {/* scriptInfo: paddingHorizontal:16, paddingTop:48, gap:8 */}
                     <div className="px-4 pt-12 flex flex-col gap-2">
-                        {/* titleRow: flexDirection:row, gap:36 */}
                         <div className="flex items-start gap-9">
-                            {/* title: fontSize:40, fontWeight:900, color:white, numberOfLines:2 */}
+                            {/* title: color:#1A1A1A */}
                             <h1
                                 className="flex-1 leading-tight line-clamp-2"
-                                style={{ fontSize: 40, fontWeight: 900, color: 'rgba(255,255,255,1)' }}
+                                style={{ fontSize: 40, fontWeight: 900, color: '#1A1A1A' }}
                             >
                                 {state.title}
                             </h1>
-                            {/* collectButton: 36×36 */}
                             <Pressable
                                 onPress={ctrl.collect}
                                 className="w-9 h-9 flex items-center justify-center shrink-0 mr-3"
@@ -358,30 +348,26 @@ export const ScriptPreparePlayPage = optimize(() => {
                             </Pressable>
                         </div>
 
-                        {/* authorRow: fontSize:12, fontWeight:600, color:rgba(255,255,255,0.4) */}
+                        {/* author: color:rgba(26,26,26,0.4) */}
                         <div className="flex items-center gap-1.5">
-                            <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(26,26,26,0.4)' }}>
                                 {I18nTexts.author}
                             </span>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(26,26,26,0.4)' }}>
                                 @{state.author?.name}
                             </span>
                         </div>
                     </div>
 
-                    {/* selectRoleHint: marginTop:40, gap:8 */}
+                    {/* selectRoleHint: dark lines + dark text */}
                     <div className="flex items-center justify-center mt-10 gap-2">
-                        {/* whiteLineLeft: 64×1 white line */}
-                        <div style={{ width: 64, height: 1, backgroundColor: 'rgba(255,255,255,0.4)' }} />
-                        {/* selectRoleText: fontSize:16, fontWeight:600, color:white */}
-                        <span style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,1)' }}>
+                        <div style={{ width: 64, height: 1, backgroundColor: 'rgba(26,26,26,0.4)' }} />
+                        <span style={{ fontSize: 16, fontWeight: 600, color: '#1A1A1A' }}>
                             {I18nTexts.selectRole}
                         </span>
-                        {/* whiteLineRight */}
-                        <div style={{ width: 64, height: 1, backgroundColor: 'rgba(255,255,255,0.4)' }} />
+                        <div style={{ width: 64, height: 1, backgroundColor: 'rgba(26,26,26,0.4)' }} />
                     </div>
 
-                    {/* roleList: marginTop:16, height:250 */}
                     <div style={{ marginTop: 16, height: 250, flexShrink: 0 }}>
                         <ScrollView
                             horizontal
@@ -392,7 +378,6 @@ export const ScriptPreparePlayPage = optimize(() => {
                         >
                             {roleList?.map((item: ScriptTypes.RoleInfo) => renderRoleItem(item))}
 
-                            {/* addRoleCard: same size, rgba(255,255,255,0.15), centered + icon */}
                             {showAddRoleButton && (
                                 <Pressable
                                     onPress={ctrl.createRole}
@@ -413,11 +398,8 @@ export const ScriptPreparePlayPage = optimize(() => {
                         </ScrollView>
                     </div>
 
-                    {/* Spacer — app uses marginTop:89 on buttonsContainer; flex-1 achieves same push-to-bottom */}
-                    <div className="flex-1" />
-
-                    {/* buttonsContainer: paddingHorizontal:16, paddingBottom:16, gap:10 */}
-                    <div className="px-4 pb-4 flex flex-col" style={{ gap: 10 }}>
+                    {/* buttonsContainer: marginTop:89 fixed */}
+                    <div className="px-4 pb-4 flex flex-col mt-[89px]" style={{ gap: 10 }}>
                         <Button
                             onPress={ctrl.playAsRole}
                             disabled={
@@ -439,7 +421,7 @@ export const ScriptPreparePlayPage = optimize(() => {
                         <Button
                             onPress={ctrl.playAsGod}
                             disabled={!state.allowPlay}
-                            kind="Minor"
+                            kind="OffWhite"
                             size="medium"
                             className="w-full"
                         >

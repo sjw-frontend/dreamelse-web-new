@@ -43,12 +43,13 @@ export const NewRole: ReactTypes.FC = optimize(() => {
                     minWidth: 40,
                     textAlign: 'center',
                     textShadow,
+                    fontFamily: 'MiSans, Inter, sans-serif',
                 }}
             >
                 {reactiveState.desc}
             </span>
             {/* divider */}
-            <div style={{ width: 2, marginLeft: 10, marginRight: 10, alignSelf: 'stretch', backgroundColor: 'rgba(237,237,237,0.8)' }} />
+            <div style={{ width: 2, marginLeft: 10, marginRight: 10, alignSelf: 'stretch', backgroundColor: 'rgba(237,237,237,0.8)', boxShadow: '0 2px 5px rgba(0,0,0,0.25)' }} />
             {/* name — vertical small text */}
             <span
                 style={{

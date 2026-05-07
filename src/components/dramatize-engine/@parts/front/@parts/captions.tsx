@@ -104,6 +104,7 @@ export const Captions: ReactTypes.FC = optimize(() => {
                                 height: 34,
                                 lineHeight: '34px',
                                 textAlign: reactiveState.isMe ? 'right' : 'left',
+                                fontFamily: 'MiSans, Inter, sans-serif',
                             }}
                         >
                             {reactiveState.roleName}
@@ -136,6 +137,7 @@ export const Captions: ReactTypes.FC = optimize(() => {
                         fontWeight: hasTitle ? 600 : 900,
                         fontSize: hasTitle ? 20 : 24,
                         color: '#EDEDED',
+                        fontFamily: hasTitle ? undefined : 'MiSans, Inter, sans-serif',
                     }}
                     lineCount={3}
                     lineHeight={hasTitle ? 24 : 38}

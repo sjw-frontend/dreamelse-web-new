@@ -37,6 +37,7 @@ export const NewPlace: ReactTypes.FC = optimize(() => {
                     fontSize: 40,
                     marginBottom: 6,
                     textShadow,
+                    fontFamily: 'MiSans, Inter, sans-serif',
                 }}
             >
                 {reactiveState.name}
