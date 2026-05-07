@@ -14,10 +14,9 @@ export const Agree = optimize(({ ctrl }: { ctrl?: InstanceType<typeof LoginContr
     const handleToPrivacyPolicy = useCallback(() => c.toPrivacyPolicy(), [c]);
 
     return (
-        <button
-            type="button"
+        <div
             onClick={c.toggleAgree}
-            className="flex flex-row items-center justify-center w-full"
+            className="flex flex-row items-center justify-center w-full cursor-pointer"
             style={{ paddingLeft: 16, paddingRight: 16, paddingTop: 8, paddingBottom: 8, marginTop: 20 }}
         >
             <Radio
@@ -42,6 +41,6 @@ export const Agree = optimize(({ ctrl }: { ctrl?: InstanceType<typeof LoginContr
                     隐私政策
                 </span>
             </span>
-        </button>
+        </div>
     );
 });
