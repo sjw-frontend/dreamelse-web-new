@@ -1414,7 +1414,6 @@ export class DramatizeNarrativeDomain extends BaseDomain<
 
     public readonly dramatize = async (isFirst = false) => {
         if (this.#ctx.isDeactivate || this.#ctx.isDramatizeStarted) {
-            console.log('[Narrative] dramatize skipped, isDeactivate=', this.#ctx.isDeactivate, 'isDramatizeStarted=', this.#ctx.isDramatizeStarted);
             return;
         }
         this.#ctx.isDramatizeStarted = true;
@@ -1424,9 +1423,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                 this.forceReady();
             }, NextNarrativeReadyTimeoutMS);
         }
-        console.log('[Narrative] dramatize waiting isReady=', this.internal.isReady, 'play=', this.internal.play);
         await this.until(() => this.internal.isReady && this.internal.play);
-        console.log('[Narrative] dramatize unblocked, setting controlShow');
 
         this.emitEvent('breakSceneAnimations');
         this.emitEvent('removeSceneSpecialEffects');

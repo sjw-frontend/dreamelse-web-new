@@ -3,8 +3,6 @@ import * as THREE from 'three/webgpu';
 
 import { DramatizeEnums } from '$/enums';
 
-let _debugFrameCount = 0;
-
 import { TextureManager } from '../manager';
 
 import { Animated, type Component, PostProcessing } from './component';
@@ -324,10 +322,6 @@ export class World {
         }
         this.#context.present();
         this.#lastTime = now;
-        _debugFrameCount++;
-        if (_debugFrameCount <= 3) {
-            console.log('[World] frame', _debugFrameCount, 'entities:', this.#entities.size, 'postProcessing:', !!this.#postProcessing);
-        }
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (this.#run) {
             requestAnimationFrame(this.animate.bind(this));

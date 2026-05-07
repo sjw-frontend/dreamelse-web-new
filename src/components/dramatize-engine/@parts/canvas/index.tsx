@@ -54,7 +54,6 @@ export const Canvas: ReactTypes.FC = optimize(() => {
         [reactiveState.framesElementList, reactiveState.nextFramesElementList],
     );
 
-    console.log('[Canvas] imageElementList=', imageElementList, 'framesElementList=', framesElementList);
 
     const gpuWidth = dimensions.height * DRAMATIZE.ScreenWHRatio;
     const gpuLeft = -(gpuWidth - dimensions.width) / 2;

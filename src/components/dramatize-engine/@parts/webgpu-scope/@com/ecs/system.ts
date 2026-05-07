@@ -196,7 +196,6 @@ export const externalParentSystem = (
     const externalParent = object.parent;
 
     if (externalParent !== parent) {
-        console.log('[externalParentSystem] reparenting', 'parentId:', parentComponent.id, 'parent:', parent, 'from:', externalParent);
         externalParent?.remove(object);
         parent?.add(object);
     }

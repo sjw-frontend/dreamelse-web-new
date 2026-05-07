@@ -123,7 +123,6 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
 
             const loadTexture = async () => {
                 try {
-                    console.log('[ImageElement] loading texture id=', id, 'uri=', file.uri);
                     const texture = await world.textureManager.loadTexture(
                         file.id,
                         file.uri,
@@ -138,7 +137,6 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
                     }
                     sprite.texture.image = texture;
                     sprite.texture.enable = true;
-                    console.log('[ImageElement] texture loaded id=', id);
                     handleReady();
                 } catch (error) {
                     if (!cancelled) {
@@ -164,7 +162,6 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
         useEffect(() => {
             if (show) sprite.misc.visible = true;
             else sprite.misc.visible = false;
-            console.log('[ImageElement] show changed id=', id, 'show=', show, 'sprite.misc.visible=', sprite.misc.visible);
         }, [show]);
 
         useEffect(() => {

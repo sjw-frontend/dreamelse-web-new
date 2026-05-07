@@ -20,8 +20,6 @@ export const WebGPUScope = ({ children }: PropsWithChildren) => {
             canvas.clientWidth || canvas.parentElement?.clientWidth || 0;
         const cssHeight = Math.round(cssWidth / DRAMATIZE.ScreenWHRatio);
 
-        console.log('[WebGPUScope] canvas size:', cssWidth, cssHeight, 'canvas.clientWidth:', canvas.clientWidth, 'parent:', canvas.parentElement?.clientWidth);
-
         const renderer = new THREE.WebGPURenderer({
             alpha: true,
             antialias: true,
@@ -41,11 +39,7 @@ export const WebGPUScope = ({ children }: PropsWithChildren) => {
         renderer.setSize(cssWidth, cssHeight, false);
 
         setRenderContext({ world });
-        world.run().then(() => {
-            console.log('[WebGPUScope] renderer initialized, backend:', (renderer as any).backend?.constructor?.name);
-        }).catch(e => {
-            console.error('[WebGPUScope] renderer init failed:', e);
-        });
+        world.run();
 
         return () => {
             setRenderContext(null);
