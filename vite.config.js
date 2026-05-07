@@ -29,10 +29,6 @@ const rnPackages = [
     'expo-clipboard',
     'expo-apple-authentication',
     'expo/fetch',
-    'expo-image',
-    'expo-linear-gradient',
-    'expo-keep-awake',
-    'react-native-wgpu',
     'lottie-react-native',
     'safe-stable-stringify',
     'buffer',
@@ -114,98 +110,7 @@ const rnStubPlugin = () => {
         },
         load(id) {
             if (id.startsWith('\0rn-stub:')) {
-                const pkg = id.replace('\0rn-stub:', '');
-                // expo-device needs totalMemory
-                if (pkg === 'expo-audio') {
-                    return `
-export default {};
-export const __esModule = true;
-export const useAudioPlayer = () => ({ play: () => {}, pause: () => {}, stop: () => {}, seekTo: () => {}, setVolume: () => {}, remove: () => {}, playing: false, currentTime: 0, duration: 0 });
-export const useAudioPlayerStatus = () => ({});
-export const createAudioPlayer = () => ({ play: () => {}, pause: () => {}, stop: () => {}, remove: () => {}, seekTo: () => {}, setVolume: () => {} });
-export const AudioStatus = {};
-`;
-                }
-                if (pkg === 'expo-device') {
-                    return `
-export default {};
-export const __esModule = true;
-export const totalMemory = null;
-export const osName = 'web';
-export const osVersion = null;
-export const deviceName = null;
-export const brand = null;
-export const manufacturer = null;
-export const modelName = null;
-export const isDevice = true;
-export const DeviceType = { UNKNOWN: 0, PHONE: 1, TABLET: 2, DESKTOP: 3, TV: 4 };
-`;
-                }
-                if (pkg === 'expo-image') {
-                    return `
-export default {};
-export const __esModule = true;
-export const Image = () => null;
-`;
-                }
-                if (pkg === 'expo-linear-gradient') {
-                    return `
-export default {};
-export const __esModule = true;
-export const LinearGradient = () => null;
-`;
-                }
-                if (pkg === 'lottie-react-native') {
-                    return `
-export default () => null;
-export const __esModule = true;
-`;
-                }
-                // react-native needs many named exports
-                return `
-export default {};
-export const __esModule = true;
-export const PixelRatio = { get: () => (typeof window !== 'undefined' ? window.devicePixelRatio : 1) || 1, getFontScale: () => 1, getPixelSizeForLayoutSize: (n) => n * ((typeof window !== 'undefined' ? window.devicePixelRatio : 1) || 1), roundToNearestPixel: (n) => n };
-export const Platform = { OS: 'web', select: (obj) => obj.web ?? obj.default ?? null, Version: 0 };
-export const Dimensions = { get: (dim) => typeof window !== 'undefined' ? (dim === 'window' ? { width: window.innerWidth, height: window.innerHeight, scale: 1, fontScale: 1 } : { width: window.screen.width, height: window.screen.height, scale: 1, fontScale: 1 }) : { width: 375, height: 812, scale: 1, fontScale: 1 }, addEventListener: () => ({ remove: () => {} }), removeEventListener: () => {} };
-export const StyleSheet = { create: (s) => s, flatten: (s) => s, hairlineWidth: 1, absoluteFill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }, absoluteFillObject: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 } };
-export const Animated = { Value: class { constructor(v) { this._v = v; } setValue(v) { this._v = v; } addListener() {} removeListener() {} interpolate() { return this; } }, timing: () => ({ start: (cb) => cb?.({ finished: true }) }), spring: () => ({ start: (cb) => cb?.({ finished: true }) }), parallel: (a) => ({ start: (cb) => { a.forEach(x => x.start()); cb?.({ finished: true }); } }), sequence: (a) => ({ start: (cb) => { a.forEach(x => x.start()); cb?.({ finished: true }); } }), delay: () => ({ start: (cb) => cb?.({ finished: true }) }), loop: () => ({ start: () => {}, stop: () => {} }), event: () => () => {}, createAnimatedComponent: (C) => C };
-export const useWindowDimensions = () => typeof window !== 'undefined' ? { width: window.innerWidth, height: window.innerHeight, scale: 1, fontScale: 1 } : { width: 375, height: 812, scale: 1, fontScale: 1 };
-export const View = () => null;
-export const Text = () => null;
-export const Image = () => null;
-export const TouchableOpacity = () => null;
-export const ScrollView = () => null;
-export const FlatList = () => null;
-export const TextInput = () => null;
-export const Modal = () => null;
-export const ActivityIndicator = () => null;
-export const Pressable = () => null;
-export const SafeAreaView = () => null;
-export const TouchableWithoutFeedback = () => null;
-export const TouchableHighlight = () => null;
-export const KeyboardAvoidingView = () => null;
-export const StatusBar = () => null;
-export const Switch = () => null;
-export const Slider = () => null;
-export const RefreshControl = () => null;
-export const SectionList = () => null;
-export const VirtualizedList = () => null;
-export const DrawerLayoutAndroid = () => null;
-export const Alert = { alert: () => {} };
-export const Keyboard = { dismiss: () => {}, addListener: () => ({ remove: () => {} }), removeListener: () => {} };
-export const AppState = { currentState: 'active', addEventListener: () => ({ remove: () => {} }) };
-export const Linking = { openURL: () => Promise.resolve(), canOpenURL: () => Promise.resolve(false), getInitialURL: () => Promise.resolve(null), addEventListener: () => ({ remove: () => {} }) };
-export const Vibration = { vibrate: () => {}, cancel: () => {} };
-export const Share = { share: () => Promise.resolve({ action: 'dismissedAction' }) };
-export const Clipboard = { getString: () => Promise.resolve(''), setString: () => {} };
-export const NativeModules = {};
-export const NativeEventEmitter = class { constructor() {} addListener() { return { remove: () => {} }; } removeAllListeners() {} };
-export const DeviceEventEmitter = { addListener: () => ({ remove: () => {} }), emit: () => {}, removeAllListeners: () => {} };
-export const InteractionManager = { runAfterInteractions: (cb) => { setTimeout(cb, 0); return { cancel: () => {} }; } };
-export const BackHandler = { addEventListener: () => ({ remove: () => {} }), removeEventListener: () => {}, exitApp: () => {} };
-export const Easing = { linear: (t) => t, ease: (t) => t, quad: (t) => t * t, cubic: (t) => t * t * t, in: (e) => e, out: (e) => (t) => 1 - e(1 - t), inOut: (e) => (t) => t < 0.5 ? e(t * 2) / 2 : 1 - e((1 - t) * 2) / 2, bezier: () => (t) => t };
-`;
+                return 'export default {}; export const __esModule = true;';
             }
             return null;
         },
@@ -249,7 +154,7 @@ export default defineConfig({
             { find: '$/effects', replacement: path.resolve(__dirname, 'src/effects') },
             { find: '$/errors', replacement: path.resolve(__dirname, 'src/errors') },
             { find: '$/uis', replacement: path.resolve(__dirname, 'src/uis') },
-            { find: '$/component-controllers', replacement: path.resolve(__dirname, 'src/component-controllers') },
+            { find: '$/component-controllers', replacement: path.resolve(__dirname, 'src/component-controllers/index.ts') },
             { find: '$/components', replacement: path.resolve(__dirname, 'src/components') },
             { find: '$/pages', replacement: path.resolve(__dirname, 'src/pages') },
             { find: '$/global-symbol', replacement: path.resolve(__dirname, 'src/types/@global-symbol') },

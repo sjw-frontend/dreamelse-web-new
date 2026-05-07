@@ -105,12 +105,16 @@ const reflectMetadataPatchPlugin = (): Plugin => ({
 });
 const rnStubPlugin = (): Plugin => {
     const navStubPath = path.resolve(__dirname, 'src/stubs/react-navigation-native-stub.ts');
+    const rnStubPath = path.resolve(__dirname, 'src/stubs/react-native-stub.js');
     return {
         name: 'rn-stub',
         enforce: 'pre',
         resolveId(id) {
             if (id === '@react-navigation/native') {
                 return navStubPath;
+            }
+            if (id === 'react-native') {
+                return rnStubPath;
             }
             if (rnPackages.includes(id)) {
                 return `\0rn-stub:${id}`;
