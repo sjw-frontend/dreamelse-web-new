@@ -6,6 +6,7 @@ import { cn } from '$/utils/cn';
 import { optimize } from '$/view';
 import type { ScriptTypes } from '$/types';
 import { DramatizeLoading } from '$/components/dramatize-loading/dramatize-loading-ui';
+import { DramatizeEngine } from '$/components/dramatize-engine/dramatize-engine-ui';
 import { PlayScriptController } from './play-script-controller';
 
 export const PlayScriptPage = optimize(() => {
@@ -35,14 +36,6 @@ export const PlayScriptPage = optimize(() => {
         isInteractionShow: ctrl.state.isInteractionShow,
     }));
 
-    const engineState = useReactive(() => ({
-        narrative: engineCtrl.state.narrative,
-        isLoading: engineCtrl.state.isLoading,
-        isWaitFirst: engineCtrl.state.isWaitFirst,
-        isInteractionShow: engineCtrl.state.isInteractionShow,
-        isWorldLineEnd: engineCtrl.state.isWorldLineEnd,
-    }));
-
     const roles = useMemo(
         () =>
             state.roles?.map((item: ScriptTypes.FrozenRoleInfo) => ({
@@ -59,17 +52,13 @@ export const PlayScriptPage = optimize(() => {
         : state.speed === 0.75 ? '0.75x'
         : '1x';
 
-    // Current narrative data for display
-    const narrative = engineState.narrative;
-    const narrativeState = narrative?.state;
-
     return (
         <RenderParentProvider>
             <EngineProvider>
                 <div className="relative w-full h-full bg-black overflow-hidden flex flex-col">
 
                     {/* ── Header ── */}
-                    <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-4 flex flex-col gap-2">
+                    <div className="absolute top-0 left-0 right-0 z-30 px-4 pt-4 flex flex-col gap-2">
                         <div className="flex items-center gap-3">
                             <h1 className="flex-1 text-xl font-bold text-text-primary truncate">
                                 {state.title}
@@ -119,60 +108,8 @@ export const PlayScriptPage = optimize(() => {
                         }}
                     />
 
-                    {/* ── Main content area ── */}
-                    <div className="absolute inset-0 flex flex-col justify-end pb-24">
-
-                        {/* Captions — role name + dialogue text */}
-                        {narrativeState && !engineState.isLoading && !engineState.isInteractionShow && (
-                            <div className="px-6 py-3 z-20">
-                                {narrativeState.roleName && (
-                                    <div className="flex items-center h-[34px] mb-1">
-                                        <span
-                                            className="font-extrabold text-text-primary"
-                                            style={{
-                                                fontSize: 24,
-                                                borderBottom: '1px solid rgba(255,255,255,0.5)',
-                                                paddingBottom: 2,
-                                            }}
-                                        >
-                                            {narrativeState.roleName}
-                                        </span>
-                                    </div>
-                                )}
-                                <p
-                                    className="text-text-primary"
-                                    style={{
-                                        fontSize: narrativeState.isNarrator ? 24 : 20,
-                                        fontWeight: narrativeState.isNarrator ? 900 : 600,
-                                        lineHeight: '1.4',
-                                    }}
-                                >
-                                    {narrativeState.text}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Interaction options */}
-                        {engineState.isInteractionShow && narrativeState?.interaction && (
-                            <div className="px-4 pb-4 z-20 flex flex-col gap-2">
-                                {narrativeState.interaction.options?.map((opt: any, i: number) => (
-                                    <button
-                                        key={i}
-                                        type="button"
-                                        className="w-full py-3 px-4 rounded-2xl text-left text-text-primary font-semibold"
-                                        style={{
-                                            backgroundColor: 'rgba(255,255,255,0.12)',
-                                            fontSize: 16,
-                                            backdropFilter: 'blur(8px)',
-                                        }}
-                                        onClick={() => engineCtrl.interact(narrativeState.narrativeId, opt.value)}
-                                    >
-                                        {opt.label}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    {/* ── DramatizeEngine: Canvas + Audios + Front (captions, options) ── */}
+                    <DramatizeEngine />
 
                     {/* ── DramatizeLoading (roles + default) ── */}
                     <DramatizeLoading
