@@ -283,7 +283,7 @@ export const createEffectsActions = (
 
     const actions: LibTypes.VarArr<DramatizeTypes.DirectorVisualActionUnion> =
         [];
-    effects.forEach(effect => {
+    effects.forEach((effect: any) => {
         if (effect.effect_id != null) {
             const effectInfo = resourceRecord.effect[effect.effect_id];
             const effectCodeProps = effectInfo?.effectCode?.props ?? null;
@@ -363,7 +363,7 @@ export const createSceneEffectsActions = (
 
     const actions: LibTypes.VarArr<DramatizeTypes.DirectorSceneActionUnion> =
         [];
-    effects.forEach(effect => {
+    effects.forEach((effect: any) => {
         if (effect.effect_id != null) {
             const effectInfo = resourceRecord.effect[effect.effect_id];
             const effectCodeProps = effectInfo?.effectCode?.props ?? null;

@@ -142,7 +142,7 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
                     const textures =
                         await world.textureManager.loadTextureGroup(
                             resourceId,
-                            files.map(f => f.uri),
+                            files.map((f: any) => f.uri),
                             isSingle
                                 ? TextureRetainPolicy.Persist
                                 : TextureRetainPolicy.OnDemand,

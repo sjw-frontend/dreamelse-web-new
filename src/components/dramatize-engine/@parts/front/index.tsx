@@ -1,6 +1,3 @@
-// @ts-nocheck
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback } from 'react';
 
 import { ASSETS } from '$/consts';
@@ -8,10 +5,8 @@ import {
     useInjectRenderController,
     useReactive,
     useSafeLayoutInsets,
-    useStyles,
 } from '$/hooks';
-import type { ReactTypes, StyleTypes } from '$/types';
-import { AsyncPressable, KeyboardControl } from '$/uis';
+import type { ReactTypes } from '$/types';
 import { optimize } from '$/view';
 
 import { Settings } from '../../dramatize-engine-const';
@@ -35,15 +30,6 @@ export const Front: ReactTypes.FC<FrontProps> = optimize(props => {
     const { frontViewBottom } = props;
 
     const insets = useSafeLayoutInsets();
-    const styles = useStyles(
-        stylesCreator,
-        {
-            bottom: insets.bottom,
-            frontViewBottom,
-        },
-        [frontViewBottom],
-    );
-
     const ctrl = useInjectRenderController(DramatizeEngineController);
 
     const reactiveState = useReactive(() => ({
@@ -56,76 +42,70 @@ export const Front: ReactTypes.FC<FrontProps> = optimize(props => {
         ctrl.pressCanvas();
     }, [reactiveState.play]);
 
+    const bottomPadding = insets.bottom + (frontViewBottom ?? 0);
+    const topColors = [...Settings.topLinearGradient.colors] as string[];
+    const bottomColors = [...Settings.bottomLinearGradient.colors] as string[];
+
     return (
-        <AsyncPressable style={styles.main} onPress={handlePress}>
-            <LinearGradient
-                style={styles.topGradient}
-                colors={Settings.topLinearGradient.colors}
-                start={Settings.topLinearGradient.start}
-                end={Settings.topLinearGradient.end}
+        <div
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+            onClick={handlePress}
+        >
+            {/* top gradient */}
+            <div
+                style={{
+                    height: 120,
+                    width: '100%',
+                    position: 'absolute',
+                    top: 0,
+                    background: `linear-gradient(to bottom, ${topColors[0]}, ${topColors[1] ?? 'transparent'})`,
+                    pointerEvents: 'none',
+                }}
             />
-            <LinearGradient
-                style={styles.bottomGradient}
-                colors={Settings.bottomLinearGradient.colors}
-                locations={Settings.bottomLinearGradient.locations}
-                start={Settings.bottomLinearGradient.start}
-                end={Settings.bottomLinearGradient.end}
+            {/* bottom gradient */}
+            <div
+                style={{
+                    height: 260,
+                    width: '100%',
+                    position: 'absolute',
+                    bottom: 0,
+                    background: `linear-gradient(to bottom, ${bottomColors[0]}, ${bottomColors[1] ?? 'rgba(0,0,0,0.8)'})`,
+                    pointerEvents: 'none',
+                }}
             />
-            <KeyboardControl style={styles.content}>
+            {/* content */}
+            <div
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'flex-end',
+                    paddingBottom: bottomPadding,
+                    boxSizing: 'border-box',
+                }}
+            >
                 <NewPlace />
                 <NewRole />
                 <Captions key={reactiveState.id} />
                 <Options {...props} />
-            </KeyboardControl>
+            </div>
+            {/* pause icon */}
             {!reactiveState.play && (
-                <Image
-                    source={ASSETS.Dramatize.scriptPlay}
-                    style={styles.play}
+                <img
+                    src={ASSETS.Dramatize.scriptPlay}
+                    alt=""
+                    style={{
+                        width: 62,
+                        height: 62,
+                        position: 'absolute',
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        pointerEvents: 'none',
+                    }}
                 />
             )}
-        </AsyncPressable>
+        </div>
     );
 });
-
-const stylesCreator = (
-    theme: StyleTypes.Theme,
-    options: LibTypes.FrozenDefine<{
-        bottom: number,
-        frontViewBottom?: number,
-    }>,
-) =>
-    theme.transformStyles({
-        main: {
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-        },
-        topGradient: {
-            height: 120,
-            width: '100%',
-            position: 'absolute',
-            top: 0,
-        },
-        bottomGradient: {
-            height: 260,
-            width: '100%',
-            position: 'absolute',
-            bottom: 0,
-        },
-        content: {
-            width: '100%',
-            flex: 1,
-            justifyContent: 'flex-end',
-            paddingBottom: options.bottom + (options.frontViewBottom ?? 0),
-        },
-        play: {
-            width: 62,
-            height: 62,
-            position: 'absolute',
-            left: '50%',
-            top: '50%',
-            transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
-        },
-    });

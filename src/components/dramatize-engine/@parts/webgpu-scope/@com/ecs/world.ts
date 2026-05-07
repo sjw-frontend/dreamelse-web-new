@@ -1,8 +1,9 @@
 // @ts-nocheck
-import { PixelRatio } from 'react-native';
 import * as THREE from 'three/webgpu';
 
 import { DramatizeEnums } from '$/enums';
+
+let _debugFrameCount = 0;
 
 import { TextureManager } from '../manager';
 
@@ -71,7 +72,7 @@ export class World {
         this.#renderer = renderer;
         this.#renderer.setClearAlpha(0);
         // TODO: comment this to disable pixel ratio.
-        this.#renderer.setPixelRatio(PixelRatio.get());
+        this.#renderer.setPixelRatio(window.devicePixelRatio || 1);
 
         this.#camera = createCamera(width, height);
         this.#scene = new THREE.Scene();
@@ -258,7 +259,7 @@ export class World {
         this.animate();
     }
 
-    public animate() {
+    public async animate() {
         // Avoid to get access to any resource after stop
         if (!this.#run) return;
 
@@ -317,14 +318,20 @@ export class World {
         updateAllEffectTimes(this.effectMeshes, delta / 1000);
 
         if (this.#postProcessing) {
-            this.#postProcessing.render();
+            await this.#postProcessing.render();
         } else {
-            this.#renderer.render(this.#scene, this.#camera);
+            await this.#renderer.render(this.#scene, this.#camera);
         }
         this.#context.present();
         this.#lastTime = now;
+        _debugFrameCount++;
+        if (_debugFrameCount <= 3) {
+            console.log('[World] frame', _debugFrameCount, 'entities:', this.#entities.size, 'postProcessing:', !!this.#postProcessing);
+        }
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        this.#run && requestAnimationFrame(this.animate.bind(this));
+        if (this.#run) {
+            requestAnimationFrame(this.animate.bind(this));
+        }
     }
 
     public registerSprite(id: string) {

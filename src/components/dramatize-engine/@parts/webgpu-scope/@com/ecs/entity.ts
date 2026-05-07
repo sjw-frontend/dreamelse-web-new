@@ -58,7 +58,7 @@ const SPRITE_COMPOSITION = [
 
 type SpriteComponents = {
     [K in (typeof SPRITE_COMPOSITION)[number] as Lowercase<
-        K['name']
+        (K & { name: string })['name']
     >]: InstanceType<K>;
 };
 
@@ -101,7 +101,7 @@ const FRAMESEQ_COMPOSITION = [
 
 type FrameSeqComponents = {
     [K in (typeof FRAMESEQ_COMPOSITION)[number] as Lowercase<
-        K['name']
+        (K & { name: string })['name']
     >]: InstanceType<K>;
 };
 
@@ -133,7 +133,7 @@ const CONTAINER_COMPOSITION = [Position, Transform, Misc, Parent] as const;
 
 type ContainerComponents = {
     [K in (typeof CONTAINER_COMPOSITION)[number] as Lowercase<
-        K['name']
+        (K & { name: string })['name']
     >]: InstanceType<K>;
 };
 
@@ -165,7 +165,7 @@ const SCENE_COMPOSITION = [PostProcessing] as const;
 
 type SceneComponents = {
     [K in (typeof SCENE_COMPOSITION)[number] as Lowercase<
-        K['name']
+        (K & { name: string })['name']
     >]: InstanceType<K>;
 };
 

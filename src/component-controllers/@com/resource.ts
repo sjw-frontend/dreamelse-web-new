@@ -1,6 +1,9 @@
+import { CharacterEnums, WorldLineEnums } from '$/enums';
 import type { FileService } from '$/services';
 import type { WorldLineTypes } from '$/types';
-import { FileUtils } from '$/utils';
+import { FileUtils, JSONUtils } from '$/utils';
+
+import { FramesNormalSpeedFPS } from '$/components/dramatize-engine/@com/consts';
 
 export const createEmptyResourceRecord = (): WorldLineTypes.Api.ResourceRecord => ({
     background: {},
@@ -29,8 +32,69 @@ export const insertResourceRecord = (
                 name: item.name,
                 desc: item.desc,
                 scale: item.scale,
-                speed: item.frame_rate == null ? null : item.frame_rate / 60,
+                speed: item.frame_rate == null ? null : item.frame_rate / FramesNormalSpeedFPS,
                 loop: item.loop,
+            };
+        } catch {}
+    });
+
+    resource.music?.forEach(item => {
+        try {
+            if (resourceRecord.music[item.id]) return;
+            resourceRecord.music[item.id] = {
+                id: item.id,
+                file: fileService.createAudioResource(
+                    item.voice_media.id,
+                    FileUtils.getAudioInfoFromApiInfo(item.voice_media),
+                ),
+                volume: item.default_volume,
+                speed: item.speed,
+                loop: true,
+            };
+        } catch {}
+    });
+
+    resource.layout?.forEach(item => {
+        try {
+            if (resourceRecord.layout[item.id]) return;
+            const layout = JSONUtils.tryParse<WorldLineTypes.Api.Layout>(item.json);
+            if (layout) {
+                resourceRecord.layout[item.id] = {
+                    id: item.id,
+                    layout,
+                };
+            }
+        } catch {}
+    });
+
+    resource.ambient?.forEach(item => {
+        try {
+            if (resourceRecord.ambient[item.id]) return;
+            resourceRecord.ambient[item.id] = {
+                id: item.id,
+                file: fileService.createAudioResource(
+                    item.voice_media.id,
+                    FileUtils.getAudioInfoFromApiInfo(item.voice_media),
+                ),
+                volume: item.default_volume,
+                speed: item.speed,
+                loop: item.is_loop,
+            };
+        } catch {}
+    });
+
+    resource.voice_fx?.forEach(item => {
+        try {
+            if (resourceRecord.voice_fx[item.id]) return;
+            resourceRecord.voice_fx[item.id] = {
+                id: item.id,
+                file: fileService.createAudioResource(
+                    item.voice_media.id,
+                    FileUtils.getAudioInfoFromApiInfo(item.voice_media),
+                ),
+                volume: item.default_volume,
+                speed: item.speed,
+                loop: item.is_loop,
             };
         } catch {}
     });
@@ -52,6 +116,44 @@ export const insertResourceRecord = (
         } catch {}
     });
 
+    resource.effect?.forEach(item => {
+        try {
+            if (resourceRecord.effect[item.id]) return;
+
+            const effectCodeProps =
+                item.effect_code &&
+                JSONUtils.tryParse<WorldLineTypes.Api.EffectCodeProps>(item.effect_code.props);
+
+            const motion =
+                item.motion &&
+                JSONUtils.tryParse<WorldLineTypes.Api.Motion>(item.motion.props);
+
+            resourceRecord.effect[item.id] = {
+                id: item.id,
+                kind: item.effect_type,
+                frames: item.frames && {
+                    id: item.id,
+                    files: item.frames.images?.map(img =>
+                        fileService.createImageResource(
+                            img.id,
+                            FileUtils.getImageInfoFromApiInfo(img),
+                        )) ?? [],
+                    name: item.frames.name,
+                    scale: undefined,
+                    speed: item.frames.frame_rate == null
+                        ? null
+                        : item.frames.frame_rate / FramesNormalSpeedFPS,
+                    loop: item.frames.loop,
+                },
+                effectCode: item.effect_code && effectCodeProps && {
+                    kind: item.effect_code.effect_name as WorldLineEnums.ApiEffectCodeKind,
+                    props: effectCodeProps,
+                },
+                motion,
+            };
+        } catch {}
+    });
+
     resource.character_appearances?.forEach(item => {
         try {
             if (resourceRecord.character_appearances[item.id]) return;
@@ -62,6 +164,27 @@ export const insertResourceRecord = (
                     FileUtils.getImageInfoFromApiInfo(item.appearance_media),
                 ),
                 scale: item.scale,
+            };
+        } catch {}
+    });
+
+    resource.characters?.forEach(item => {
+        try {
+            if (resourceRecord.characters[item.role_name]) return;
+            resourceRecord.characters[item.role_name] = {
+                roleName: item.role_name,
+                roleDesc: item.role_identities?.[0] ?? '',
+                gender:
+                    item.gender === CharacterEnums.ApiGender.Boy
+                        ? CharacterEnums.Gender.Boy
+                        : item.gender === CharacterEnums.ApiGender.Girl
+                          ? CharacterEnums.Gender.Girl
+                          : CharacterEnums.Gender.Other,
+                species:
+                    item.species === CharacterEnums.ApiSpecies.Man
+                        ? CharacterEnums.Species.Man
+                        : CharacterEnums.Species.Obj,
+                isMe: item.is_me,
             };
         } catch {}
     });

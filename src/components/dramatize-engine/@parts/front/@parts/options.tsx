@@ -1,22 +1,12 @@
-// @ts-nocheck
-import { Image } from 'expo-image';
-import LottieView from 'lottie-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
 
-import {
-    ChatInput,
-    type ChatInputRef,
-    type SendVoiceMessageResult,
-} from '$/components';
 import { ASSETS } from '$/consts';
 import {
     useI18n,
     useInjectRenderController,
     useReactive,
-    useStyles,
 } from '$/hooks';
-import type { FileTypes, ReactTypes, StyleTypes } from '$/types';
+import type { FileTypes, ReactTypes } from '$/types';
 import { ScrollText } from '$/uis';
 import { MathUtils, StringUtils, TimerUtils } from '$/utils';
 import { optimize } from '$/view';
@@ -26,7 +16,6 @@ import {
     Countdown,
     CurvedGradientText,
     OptionList,
-    type OptionListProps,
 } from '../../../@uis';
 import { I18nTexts, Settings } from '../../../dramatize-engine-const';
 import { DramatizeEngineController } from '$/component-controllers';
@@ -41,7 +30,6 @@ export const Options: ReactTypes.FC<OptionsProps> = optimize(
         showChatInput = true,
         chatInputExtraStuffHeight = Settings.defaultChatInputExtraStuffHeight,
     }) => {
-        const styles = useStyles(stylesCreator);
         const i18n = useI18n(I18nTexts);
 
         const [isInputing, setIsInputing] = useState(false);
@@ -77,7 +65,7 @@ export const Options: ReactTypes.FC<OptionsProps> = optimize(
                     narrative?.state.director.interaction?.lastValue ?? null,
                 get lastSelectOption() {
                     return this.options.find(
-                        item => item.value === this.lastValue,
+                        (item: { value: string }) => item.value === this.lastValue,
                     );
                 },
             };
@@ -87,20 +75,19 @@ export const Options: ReactTypes.FC<OptionsProps> = optimize(
             LibTypes.Arr<FileTypes.ImageResource>
         >([]);
 
-        const chatInputRef: ChatInputRef = useRef(null);
+        const [inputText, setInputText] = useState('');
 
         const handleInteract = useCallback(
             async (value: string) => {
                 if (reactiveState.narrativeId != null) {
-                    chatInputRef.current?.blur();
                     await ctrl.interact(reactiveState.narrativeId, value);
                 }
             },
             [reactiveState.narrativeId],
         );
 
-        const onSelect = useCallback<OptionListProps['onPress'] & {}>(
-            option => {
+        const onSelect = useCallback(
+            (option: { value: string }) => {
                 handleInteract(option.value);
             },
             [handleInteract],
@@ -114,27 +101,20 @@ export const Options: ReactTypes.FC<OptionsProps> = optimize(
             (text: string) => {
                 if (!StringUtils.isEmpty(text.trim())) {
                     handleInteract(text.trim());
+                    setInputText('');
                 }
             },
             [handleInteract],
         );
 
-        const onSubmitVoiceInput = useCallback(
-            (result: SendVoiceMessageResult & {}) => {
-                if (!StringUtils.isEmpty(result.text.trim())) {
-                    handleInteract(result.text.trim());
-                }
-            },
-            [handleInteract],
-        );
+        const handleInputFocus = useCallback(() => {
+            ctrl.interacting();
+            setIsInputing(true);
+        }, []);
 
-        const handleInputing = useCallback((inputing: boolean) => {
-            if (inputing) {
-                ctrl.interacting();
-            } else {
-                ctrl.interactStandby();
-            }
-            setIsInputing(inputing);
+        const handleInputBlur = useCallback(() => {
+            ctrl.interactStandby();
+            setIsInputing(false);
         }, []);
 
         useEffect(() => {
@@ -144,7 +124,7 @@ export const Options: ReactTypes.FC<OptionsProps> = optimize(
                 reactiveState.achievement
             ) {
                 ctrl.requestAchievementImages(reactiveState.narrativeId).then(
-                    data => setImages(data),
+                    (data: LibTypes.Arr<FileTypes.ImageResource>) => setImages(data),
                 );
             }
         }, [
@@ -212,12 +192,11 @@ export const Options: ReactTypes.FC<OptionsProps> = optimize(
 
         if (reactiveState.isEnd) {
             return (
-                <View style={styles.resultView}>
-                    <Image
-                        source={ASSETS.Dramatize.death}
-                        style={styles.bgImage}
-                    />
-                </View>
+                <div style={{ position: 'absolute', inset: 0 }}>
+                    {ASSETS.Dramatize.death && (
+                        <img src={ASSETS.Dramatize.death} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                </div>
             );
         }
 
@@ -227,239 +206,98 @@ export const Options: ReactTypes.FC<OptionsProps> = optimize(
 
         if (reactiveState.value != null) {
             return (
-                <View style={styles.resultView}>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                    {/* background */}
                     {reactiveState.achievement ? (
-                        <Image
-                            source={ASSETS.Dramatize.achievement}
-                            style={styles.bgImage}
-                        />
+                        <img src={ASSETS.Dramatize.achievement} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                        <View style={styles.bg} />
+                        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)' }} />
                     )}
-                    <View style={styles.resultTop}>
+                    {/* top area */}
+                    <div style={{ height: '36%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'stretch' }}>
                         {reactiveState.achievement && (
-                            <CurvedGradientText
-                                text={reactiveState.achievement.title}
-                                style={styles.achievement}
-                            />
+                            <CurvedGradientText text={reactiveState.achievement.title} />
                         )}
                         {images.length > 0 ? (
-                            <View style={styles.achievementImageView}>
+                            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
                                 {images.map((item, index) => (
-                                    <Image
-                                        source={item.uri}
-                                        key={index}
-                                        style={styles.achievementImage}
-                                        contentFit='contain'
-                                    />
+                                    <img key={index} src={item.uri} alt="" style={{ height: 107, width: 60, objectFit: 'contain' }} />
                                 ))}
-                            </View>
+                            </div>
                         ) : (
-                            <LottieView
-                                source={ASSETS.LogoLottie.whiteDance}
-                                style={styles.whiteDance}
-                                autoPlay
-                                renderMode='SOFTWARE'
-                            />
+                            <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                <div style={{ width: 80, height: 80, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span style={{ fontSize: 32 }}>✨</span>
+                                </div>
+                            </div>
                         )}
-                    </View>
-                    <View style={styles.resultTitleView}>
-                        <Text style={styles.resultTitle}>
+                    </div>
+                    {/* result title */}
+                    <div style={{ marginTop: 35, minHeight: 200, marginLeft: 48, marginRight: 48 }}>
+                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18, textAlign: 'center', fontWeight: 400, margin: 0 }}>
                             {i18n.youSelect()}
-                        </Text>
-                        <ScrollText
-                            minHeight={40}
-                            maxHeight={96}
-                            text={reactiveState.value}
-                            textStyle={styles.resultText}
-                        />
-                    </View>
-                    {reactiveState.discovered &&
-                        reactiveState.discovered.length > 0 && (
-                            <View style={styles.discovered}>
-                                <View style={styles.discoveredTitleView}>
-                                    <Image
-                                        source={ASSETS.NewCommon.whiteLineLeft}
-                                        style={styles.splitLine}
-                                    />
-                                    <Text style={styles.discoveredTitle}>
-                                        解锁彩蛋
-                                    </Text>
-                                    <Image
-                                        source={ASSETS.NewCommon.whiteLineRight}
-                                        style={styles.splitLine}
-                                    />
-                                </View>
-                                <Text
-                                    style={styles.discoveredText}
-                                    numberOfLines={5}
-                                >
-                                    {reactiveState.discovered[0]}
-                                </Text>
-                            </View>
-                        )}
-                </View>
+                        </p>
+                        <ScrollText text={reactiveState.value} style={{ fontSize: 24, fontWeight: 500, textAlign: 'center', color: 'rgba(255,255,255,1)' }} />
+                    </div>
+                    {/* discovered */}
+                    {reactiveState.discovered && reactiveState.discovered.length > 0 && (
+                        <div style={{ marginLeft: 53, marginRight: 53 }}>
+                            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                                <div style={{ height: 1, width: 54, backgroundColor: 'rgba(255,255,255,0.5)' }} />
+                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 500, marginLeft: 10, marginRight: 10 }}>解锁彩蛋</span>
+                                <div style={{ height: 1, width: 54, backgroundColor: 'rgba(255,255,255,0.5)' }} />
+                            </div>
+                            <p style={{ marginTop: 15, color: 'rgba(255,255,255,1)', fontWeight: 400, fontSize: 16, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>
+                                {reactiveState.discovered[0]}
+                            </p>
+                        </div>
+                    )}
+                </div>
             );
         }
 
         return (
-            <View style={styles.view}>
+            <div style={{ marginTop: 12, paddingLeft: 16, paddingRight: 16, alignSelf: 'stretch' as const }}>
+                {/* countdown */}
                 {reactiveState.showCountDown && (
-                    <View
-                        style={[
-                            styles.countdownView,
-                            reactiveState.isInteractPause && styles.hide,
-                        ]}
-                    >
+                    <div style={reactiveState.isInteractPause ? { width: 0, height: 0, position: 'absolute', opacity: 0, overflow: 'hidden' } : { width: '100%', marginTop: 16, marginBottom: 16 }}>
                         <Countdown
-                            duration={MathUtils.ms2s(reactiveState.timeoutMS)}
-                            onComplete={onCountdownComplete}
-                            paused={reactiveState.isInteractPause}
+                            seconds={MathUtils.ms2s(reactiveState.timeoutMS)}
+                            onEnd={onCountdownComplete}
                         />
-                    </View>
+                    </div>
                 )}
-                {!reactiveState.isInteractPause &&
-                    reactiveState.options.length > 0 && (
-                        <OptionList
-                            selectedId={reactiveState.lastSelectOption?.id}
-                            options={reactiveState.options}
-                            onPress={onSelect}
-                        />
-                    )}
+                {/* option list */}
+                {!reactiveState.isInteractPause && reactiveState.options.length > 0 && (
+                    <OptionList
+                        options={reactiveState.options}
+                        onSelect={onSelect}
+                    />
+                )}
+                {/* inline text input (replaces ChatInput for play mode) */}
                 {showChatInput && reactiveState.play && (
-                    <View style={styles.inputView}>
-                        <ChatInput
-                            ref={chatInputRef}
-                            onInput={handleInputing}
-                            onSendMsg={onSubmitInput}
-                            onSendVoice={onSubmitVoiceInput}
-                            extraStuffHeight={chatInputExtraStuffHeight}
-                            defaultInputText={
-                                reactiveState.lastSelectOption == null
-                                    ? reactiveState.lastValue
-                                    : null
-                            }
-                            style={isInputing ? null : styles.chatInput}
-                            blur={isInputing ? 0 : 60}
-                            theme={isInputing ? 'light' : 'dark'}
+                    <div style={{ marginTop: 12, display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 24, padding: '8px 16px' }}>
+                        <input
+                            type="text"
+                            value={inputText}
+                            onChange={e => setInputText(e.target.value)}
+                            onFocus={handleInputFocus}
+                            onBlur={handleInputBlur}
+                            onKeyDown={e => { if (e.key === 'Enter') onSubmitInput(inputText); }}
+                            placeholder={reactiveState.lastSelectOption == null && reactiveState.lastValue ? reactiveState.lastValue : '输入你的回应...'}
+                            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#EDEDED', fontSize: 16 }}
                         />
-                    </View>
+                        <button
+                            onClick={() => onSubmitInput(inputText)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+                        >
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M2 10l16-8-8 16V10H2z" fill="white" />
+                            </svg>
+                        </button>
+                    </div>
                 )}
-            </View>
+            </div>
         );
     },
 );
-
-const stylesCreator = (theme: StyleTypes.Theme) =>
-    theme.transformStyles({
-        view: {
-            marginTop: 12,
-            paddingHorizontal: 16,
-            alignSelf: 'stretch',
-        },
-        hide: {
-            width: 0,
-            height: 0,
-            position: 'absolute',
-            opacity: 0,
-            overflow: 'hidden',
-        },
-        countdownView: {
-            width: '100%',
-            marginVertical: 16,
-        },
-        inputView: { marginTop: 12, flex: 0 },
-        chatInput: {
-            backgroundColor: 'rgba(255, 255, 255, 0.12)',
-        },
-        splitLine: {
-            height: 1,
-            width: 54,
-            opacity: 0.5,
-        },
-        resultView: {
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            alignItems: 'stretch',
-            justifyContent: 'flex-start',
-            position: 'absolute',
-        },
-        resultTop: {
-            height: '36%',
-            justifyContent: 'flex-end',
-            alignItems: 'stretch',
-        },
-        achievement: {
-            marginBottom: -220,
-        },
-        achievementImageView: {
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 8,
-        },
-        achievementImage: {
-            height: 107,
-            width: 60,
-        },
-        whiteDance: {
-            alignSelf: 'center',
-            width: 80,
-            height: 80,
-        },
-        bg: {
-            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            position: 'absolute',
-        },
-        bgImage: {
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            position: 'absolute',
-        },
-        resultTitleView: {
-            marginTop: 35,
-            minHeight: 200,
-            marginHorizontal: 48,
-        },
-        resultTitle: {
-            color: 'rgba(255, 255, 255, 0.5)',
-            fontSize: 18,
-            textAlign: 'center',
-            fontWeight: 400,
-        },
-        resultText: {
-            fontSize: 24,
-            fontWeight: 500,
-            textAlign: 'center',
-            color: 'rgba(255, 255, 255, 1)',
-        },
-        discovered: {
-            marginHorizontal: 53,
-            alignItems: 'stretch',
-        },
-        discoveredTitleView: {
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        discoveredTitle: {
-            color: 'rgba(255, 255, 255, 1)',
-            opacity: 0.5,
-            fontSize: 12,
-            fontWeight: 500,
-            marginHorizontal: 10,
-        },
-        discoveredText: {
-            marginTop: 15,
-            color: 'rgba(255, 255, 255, 1)',
-            fontWeight: 400,
-            fontSize: 16,
-        },
-    });

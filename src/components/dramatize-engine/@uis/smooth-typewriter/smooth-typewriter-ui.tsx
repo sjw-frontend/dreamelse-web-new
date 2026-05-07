@@ -1,6 +1,4 @@
-// @ts-nocheck
 import React, { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
 
 import { optimize } from '$/view';
 
@@ -68,19 +66,17 @@ export const SmoothTypewriter: React.FC<SmoothTypewriterProps> = optimize(
         }, [play, isComplete, text, typingSpeedMS, speed]);
 
         return (
-            <View
-                style={[
-                    {
-                        height: lineCount * lineHeight + maskHeight,
-                        overflow: 'hidden',
-                    },
-                    style,
-                ]}
+            <div
+                style={{
+                    height: lineCount * lineHeight + maskHeight,
+                    overflow: 'hidden',
+                    ...(style as React.CSSProperties),
+                }}
             >
-                <Text style={[textStyle, { lineHeight }]}>
+                <span style={{ lineHeight: `${lineHeight}px`, ...(textStyle as React.CSSProperties) }}>
                     {text.slice(0, displayedCount)}
-                </Text>
-            </View>
+                </span>
+            </div>
         );
     },
 );

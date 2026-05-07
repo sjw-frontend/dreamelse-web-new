@@ -37,7 +37,7 @@ const createShowState = <T extends DramatizeTypes.VisualState>(
 };
 
 const createResourceId = (id: string, kind: WorldLineTypes.Api.ResourceKind) =>
-    `${kind}-${id}`;
+    `${String(kind)}-${id}`;
 
 export const createFramesElement = (
     options: LibTypes.Define<{

@@ -32,9 +32,9 @@ export const CanvasScene: ReactTypes.FC = optimize(() => {
 
     useWatch(
         () => ctrl.state.narrative?.state.sceneStyle,
-        style =>
+        (style: any) =>
             setSceneProps(
-                prevState =>
+                (prevState: any) =>
                     ({
                         ...prevState,
                         style,
@@ -47,9 +47,9 @@ export const CanvasScene: ReactTypes.FC = optimize(() => {
 
     useWatch(
         () => !ctrl.state.play,
-        suspend =>
+        (suspend: any) =>
             setSceneProps(
-                prevState =>
+                (prevState: any) =>
                     ({
                         ...prevState,
                         suspend,
@@ -62,9 +62,9 @@ export const CanvasScene: ReactTypes.FC = optimize(() => {
 
     useWatch(
         () => ctrl.state.speed,
-        speed =>
+        (speed: any) =>
             setSceneProps(
-                prevState =>
+                (prevState: any) =>
                     ({
                         ...prevState,
                         speed,
@@ -88,18 +88,18 @@ export const CanvasScene: ReactTypes.FC = optimize(() => {
         ref.current?.removeSpecialEffects();
     });
 
-    useListenEvent(ctrl, 'runSceneAnimation', animation =>
+    useListenEvent(ctrl, 'runSceneAnimation', (animation: any) =>
         setSceneProps(
-            prevState =>
+            (prevState: any) =>
                 ({
                     ...prevState,
                     animation,
                 }) satisfies SceneProps,
         ));
 
-    useListenEvent(ctrl, 'runSceneSpecialEffect', specialEffect =>
+    useListenEvent(ctrl, 'runSceneSpecialEffect', (specialEffect: any) =>
         setSceneProps(
-            prevState =>
+            (prevState: any) =>
                 ({
                     ...prevState,
                     specialEffects: [specialEffect],

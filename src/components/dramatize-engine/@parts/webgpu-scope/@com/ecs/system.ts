@@ -23,7 +23,8 @@ export const externalMiscSystem = (
     entity: Map<string, Component>,
     mesh: THREE.Object3D,
 ) => {
-    const misc = Misc.ensureType(entity.get(Misc.name));
+    if (!entity.has(Misc.componentName)) return;
+    const misc = Misc.ensureType(entity.get(Misc.componentName));
 
     mesh.visible = misc.visible;
 };
@@ -32,30 +33,30 @@ export const externalLocateSystem = (
     entity: Map<string, Component>,
     object: THREE.Object3D,
 ) => {
-    const hasPosition = entity.has(Position.name);
+    const hasPosition = entity.has(Position.componentName);
     if (!hasPosition) return;
 
-    const hasShaking = entity.has(SinusoidalShaking.name);
+    const hasShaking = entity.has(SinusoidalShaking.componentName);
     let offsetX = 0;
     let offsetY = 0;
     if (hasShaking) {
         const shaking = SinusoidalShaking.ensureType(
-            entity.get(SinusoidalShaking.name),
+            entity.get(SinusoidalShaking.componentName),
         );
         offsetX = shaking.offsetX;
         offsetY = shaking.offsetY;
     }
 
-    const hasTransform = entity.has(Transform.name);
+    const hasTransform = entity.has(Transform.componentName);
     let transformX = 0;
     let transformY = 0;
     if (hasTransform) {
-        const transform = Transform.ensureType(entity.get(Transform.name));
+        const transform = Transform.ensureType(entity.get(Transform.componentName));
         transformX = transform.x;
         transformY = transform.y;
     }
 
-    const position = Position.ensureType(entity.get(Position.name));
+    const position = Position.ensureType(entity.get(Position.componentName));
     const zValue =
         object.parent instanceof THREE.Mesh
             ? (position.z + 0.1) / 10000
@@ -72,14 +73,14 @@ export const externalSizeAndAnchorSystem = (
     entity: Map<string, Component>,
     mesh: THREE.Mesh,
 ) => {
-    if (!entity.has(Size.name)) return;
-    const size = Size.ensureType(entity.get(Size.name));
+    if (!entity.has(Size.componentName)) return;
+    const size = Size.ensureType(entity.get(Size.componentName));
     const geometry = mesh.geometry;
 
     if (geometry instanceof THREE.PlaneGeometry) {
-        const hasAnchor = entity.has(Anchor.name);
+        const hasAnchor = entity.has(Anchor.componentName);
         const anchor = hasAnchor
-            ? Anchor.ensureType(entity.get(Anchor.name))
+            ? Anchor.ensureType(entity.get(Anchor.componentName))
             : null;
         const anchorX = anchor?.x ?? 0;
         const anchorY = anchor?.y ?? 0;
@@ -127,7 +128,8 @@ export const externalTransformSystem = (
     entity: Map<string, Component>,
     mesh: THREE.Object3D,
 ) => {
-    const transform = Transform.ensureType(entity.get(Transform.name));
+    if (!entity.has(Transform.componentName)) return;
+    const transform = Transform.ensureType(entity.get(Transform.componentName));
 
     mesh.scale.set(transform.scale, transform.scale, 1);
     mesh.rotation.z = transform.rotation;
@@ -137,7 +139,8 @@ export const externalTextureSystem = (
     entity: Map<string, Component>,
     uberMesh: UberMesh,
 ) => {
-    const texture = Texture.ensureType(entity.get(Texture.name));
+    if (!entity.has(Texture.componentName)) return;
+    const texture = Texture.ensureType(entity.get(Texture.componentName));
 
     uberMesh.uniforms.enableTexture.value = texture.enable ? 1 : -1;
 
@@ -150,7 +153,8 @@ export const externalMaterialSystem = (
     entity: Map<string, Component>,
     uberMesh: UberMesh,
 ) => {
-    const material = Material.ensureType(entity.get(Material.name));
+    if (!entity.has(Material.componentName)) return;
+    const material = Material.ensureType(entity.get(Material.componentName));
     // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
     const externalMaterial = uberMesh.mesh
         .material as THREE.MeshBasicNodeMaterial;
@@ -168,7 +172,8 @@ export const externalFilterSystem = (
     entity: Map<string, Component>,
     externalBlurStrength: THREE.UniformNode<'float', number>,
 ) => {
-    const filter = Filter.ensureType(entity.get(Filter.name));
+    if (!entity.has(Filter.componentName)) return;
+    const filter = Filter.ensureType(entity.get(Filter.componentName));
     const clampedBlur = THREE.MathUtils.clamp(filter.blur, 0, 1);
     const remappedBlur = THREE.MathUtils.mapLinear(clampedBlur, 0, 1, 0, 0.01);
 
@@ -181,9 +186,9 @@ export const externalParentSystem = (
     externalContainerMap: Map<string, THREE.Object3D>,
     object: THREE.Object3D,
 ) => {
-    if (!entity.has(Parent.name)) return;
+    if (!entity.has(Parent.componentName)) return;
 
-    const parentComponent = Parent.ensureType(entity.get(Parent.name));
+    const parentComponent = Parent.ensureType(entity.get(Parent.componentName));
     const parent =
         externalContainerMap.get(parentComponent.id) ??
         externalMeshMap.get(parentComponent.id)?.mesh;
@@ -191,6 +196,7 @@ export const externalParentSystem = (
     const externalParent = object.parent;
 
     if (externalParent !== parent) {
+        console.log('[externalParentSystem] reparenting', 'parentId:', parentComponent.id, 'parent:', parent, 'from:', externalParent);
         externalParent?.remove(object);
         parent?.add(object);
     }
@@ -204,9 +210,9 @@ export const externPostProcessingSystem = (
     brightnessUniform: THREE.UniformNode<'float', number>,
     sharpnessUniform: THREE.UniformNode<'float', number>,
 ) => {
-    if (!entity.has(PostProcessing.name)) return;
+    if (!entity.has(PostProcessing.componentName)) return;
     const postProcessing = PostProcessing.ensureType(
-        entity.get(PostProcessing.name),
+        entity.get(PostProcessing.componentName),
     );
 
     colorUniform.value.set(postProcessing.color);
@@ -220,17 +226,17 @@ export const textureRefSyncSystem = (
     entity: Map<string, Component>,
     entities: Map<string, Map<string, Component>>,
 ) => {
-    if (!entity.has(TextureRef.name)) return;
-    const textureRef = TextureRef.ensureType(entity.get(TextureRef.name));
+    if (!entity.has(TextureRef.componentName)) return;
+    const textureRef = TextureRef.ensureType(entity.get(TextureRef.componentName));
 
     if (textureRef.id == null) return;
     const targetEntity = entities.get(textureRef.id);
 
     if (!targetEntity) return;
-    if (!targetEntity.has(Texture.name)) return;
+    if (!targetEntity.has(Texture.componentName)) return;
 
-    const targetTexture = Texture.ensureType(targetEntity.get(Texture.name));
-    const texture = Texture.ensureType(entity.get(Texture.name));
+    const targetTexture = Texture.ensureType(targetEntity.get(Texture.componentName));
+    const texture = Texture.ensureType(entity.get(Texture.componentName));
 
     texture.image = targetTexture.image;
     texture.enable = targetTexture.enable;
@@ -240,12 +246,12 @@ export const frameSeqTextureSystem = (
     entity: Map<string, Component>,
     delta: number,
 ) => {
-    if (!entity.has(Frames.name)) return;
+    if (!entity.has(Frames.componentName)) return;
 
-    const frames = Frames.ensureType(entity.get(Frames.name));
+    const frames = Frames.ensureType(entity.get(Frames.componentName));
     if (frames.images.length === 0 || !frames.play) return;
 
-    const texture = Texture.ensureType(entity.get(Texture.name));
+    const texture = Texture.ensureType(entity.get(Texture.componentName));
 
     if (frames.images[frames.index]) {
         texture.image = frames.images[frames.index] ?? null;
@@ -303,11 +309,12 @@ export const animateLocateSystem = (
     entity: Map<string, Component>,
     delta: number,
 ) => {
-    const region = Position.ensureType(entity.get(Position.name));
+    if (!entity.has(Position.componentName)) return;
+    const region = Position.ensureType(entity.get(Position.componentName));
 
     // Process all animated components for this Position
     for (const [key, component] of entity.entries()) {
-        if (!key.startsWith(`${Animated.name}<${Position.name}:`)) continue;
+        if (!key.startsWith(`${Animated.componentName}<${Position.componentName}:`)) continue;
         if (!(component instanceof Animated)) continue;
         if (component.targetComponentClass !== Position) continue;
 
@@ -342,9 +349,9 @@ export const sinusoidalShakingLocateSystem = (
     entity: Map<string, Component>,
     delta: number,
 ) => {
-    if (!entity.has(SinusoidalShaking.name)) return;
+    if (!entity.has(SinusoidalShaking.componentName)) return;
     const shaking = SinusoidalShaking.ensureType(
-        entity.get(SinusoidalShaking.name),
+        entity.get(SinusoidalShaking.componentName),
     );
 
     shaking.elapsed += delta;
@@ -359,11 +366,12 @@ export const animateTransformSystem = (
     entity: Map<string, Component>,
     delta: number,
 ) => {
-    const transform = Transform.ensureType(entity.get(Transform.name));
+    if (!entity.has(Transform.componentName)) return;
+    const transform = Transform.ensureType(entity.get(Transform.componentName));
 
     // Process all animated components for this Transform
     for (const [key, component] of entity.entries()) {
-        if (!key.startsWith(`${Animated.name}<${Transform.name}:`)) continue;
+        if (!key.startsWith(`${Animated.componentName}<${Transform.componentName}:`)) continue;
         if (!(component instanceof Animated)) continue;
         if (component.targetComponentClass !== Transform) continue;
 
@@ -405,11 +413,11 @@ export const animateMaterialSystem = (
     entity: Map<string, Component>,
     delta: number,
 ) => {
-    if (!entity.has(Material.name)) return;
-    const material = Material.ensureType(entity.get(Material.name));
+    if (!entity.has(Material.componentName)) return;
+    const material = Material.ensureType(entity.get(Material.componentName));
 
     for (const [key, component] of entity.entries()) {
-        if (!key.startsWith(`${Animated.name}<${Material.name}:`)) continue;
+        if (!key.startsWith(`${Animated.componentName}<${Material.componentName}:`)) continue;
         if (!(component instanceof Animated)) continue;
         if (component.targetComponentClass !== Material) continue;
 
@@ -456,11 +464,11 @@ export const animateFilterSystem = (
     entity: Map<string, Component>,
     delta: number,
 ) => {
-    if (!entity.has(Filter.name)) return;
-    const filter = Filter.ensureType(entity.get(Filter.name));
+    if (!entity.has(Filter.componentName)) return;
+    const filter = Filter.ensureType(entity.get(Filter.componentName));
 
     for (const [key, component] of entity.entries()) {
-        if (!key.startsWith(`${Animated.name}<${Filter.name}:`)) continue;
+        if (!key.startsWith(`${Animated.componentName}<${Filter.componentName}:`)) continue;
         if (!(component instanceof Animated)) continue;
         if (component.targetComponentClass !== Filter) continue;
 
@@ -494,14 +502,14 @@ export const animatedPostProcessingSystem = (
     entity: Map<string, Component>,
     delta: number,
 ) => {
-    if (!entity.has(PostProcessing.name)) return;
+    if (!entity.has(PostProcessing.componentName)) return;
     const postProcessing = PostProcessing.ensureType(
-        entity.get(PostProcessing.name),
+        entity.get(PostProcessing.componentName),
     );
 
     // Process all animated components for this PostProcessing
     for (const [key, component] of entity.entries()) {
-        if (!key.startsWith(`${Animated.name}<${PostProcessing.name}:`)) {
+        if (!key.startsWith(`${Animated.componentName}<${PostProcessing.componentName}:`)) {
             continue;
         }
         if (!(component instanceof Animated)) continue;

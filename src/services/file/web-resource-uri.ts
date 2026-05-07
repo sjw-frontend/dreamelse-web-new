@@ -6,12 +6,13 @@ export function rewriteWebResourceUri(uri: string): string {
         return uri;
     }
 
-    const apiOrigin = process.env.EXPO_PUBLIC_API_ORIGIN;
+    // Support both VITE_ (Vite) and EXPO_PUBLIC_ prefixes
+    const apiOrigin = (import.meta as any).env?.VITE_API_ORIGIN ?? process.env.EXPO_PUBLIC_API_ORIGIN;
     if (apiOrigin && uri.startsWith(API_ORIGIN)) {
         return `${apiOrigin}${uri.slice(API_ORIGIN.length)}`;
     }
 
-    const cdnOrigin = process.env.EXPO_PUBLIC_CDN_ORIGIN;
+    const cdnOrigin = (import.meta as any).env?.VITE_CDN_ORIGIN ?? process.env.EXPO_PUBLIC_CDN_ORIGIN;
     if (cdnOrigin && uri.startsWith(CDN_ORIGIN)) {
         return `${cdnOrigin}${uri.slice(CDN_ORIGIN.length)}`;
     }

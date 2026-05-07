@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { useInjectRenderController, useReactive } from '$/hooks';
 import type { DramatizeTypes, ReactTypes } from '$/types';
@@ -37,7 +37,7 @@ export const Audio: ReactTypes.FC<Props> = optimize(
             onFinishRef.current = onFinish;
         }, [onReady, onFinish]);
 
-        // Create HTMLAudioElement once on mount
+        // Create HTMLAudioElement once
         useMemo(() => {
             const audio = new window.Audio(file.uri);
             audioRef.current = audio;

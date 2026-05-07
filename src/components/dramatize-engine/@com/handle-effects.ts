@@ -20,7 +20,7 @@ const innerHandleEffects = (
     const actionEffects: LibTypes.VarArr<WorldLineTypes.Api.Effect> = [];
     const elements: LibTypes.VarArr<DramatizeTypes.DirectorFramesElement> = [];
 
-    effects.forEach(item => {
+    effects.forEach((item: any) => {
         if (item.effect_id != null) {
             const effectInfo = resourceRecord.effect[item.effect_id];
             if (

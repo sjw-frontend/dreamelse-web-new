@@ -172,7 +172,7 @@ export class DramatizeEngineController extends BaseRenderController<State, Inter
                 if (typeof nextNarrative === 'object' && nextNarrative) {
                     setTimeout(() => {
                         nextNarrative.forceReady();
-                    }, NextNarrativeReadyTimeoutMS);
+                    }, NextNarrativeReadyTimeoutMS / (this.internal.speed || 1));
                 }
             },
         );

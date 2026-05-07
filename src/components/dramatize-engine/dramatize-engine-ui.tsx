@@ -4,6 +4,7 @@ import type { ReactTypes } from '$/types';
 import { optimize } from '$/view';
 
 import { Canvas, Front, type FrontProps } from './@parts';
+import { Audios } from './@parts/audios';
 import { DramatizeEngineController } from '$/component-controllers';
 
 type Props = LibTypes.FrozenDefine<FrontProps>;
@@ -24,6 +25,7 @@ export const DramatizeEngine: ReactTypes.FC<Props> = optimize(props => {
             }}
         >
             <Canvas />
+            <Audios />
             <Front {...props} />
         </div>
     );

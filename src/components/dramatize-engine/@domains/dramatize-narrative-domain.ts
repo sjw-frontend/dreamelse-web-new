@@ -235,10 +235,10 @@ export class DramatizeNarrativeDomain extends BaseDomain<
         this.internal.visualElementList = [
             ...director.scene.effectElements,
             director.place?.backgroundElement,
-            ...director.roles.map(role => role.appearanceElement),
-            ...director.roles.map(role => role.effectElements).flat(),
+            ...director.roles.map((role: any) => role.appearanceElement),
+            ...director.roles.map((role: any) => role.effectElements).flat(),
             ...director.layoutMaterials,
-        ].filter(item => {
+        ].filter((item: any) => {
             if (item) {
                 this.#ctx.visualElementRecord[item.id] = item;
             }
@@ -252,7 +252,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
         const framesElementList: LibTypes.VarArr<DramatizeTypes.DirectorFramesElement> =
             [];
 
-        this.internal.visualElementList.forEach(item => {
+        this.internal.visualElementList.forEach((item: any) => {
             if (item.kind === DramatizeEnums.UnitKind.Image) {
                 imageElementList.push(item);
                 this.#ctx.imageElementRecord[item.id] = item;
@@ -304,7 +304,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
         }
         element.state.isActionsExecuted = true;
 
-        element.actions.forEach(async action => {
+        element.actions.forEach(async (action: any) => {
             if (action.delayMS != null && action.delayMS > 0) {
                 await this.#waitActionDelay(action.delayMS);
             }
@@ -399,7 +399,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
             return;
         }
 
-        this.internal.director.scene.actions.forEach(async action => {
+        this.internal.director.scene.actions.forEach(async (action: any) => {
             if (action.delayMS != null && action.delayMS > 0) {
                 await this.#waitActionDelay(action.delayMS);
             }
@@ -471,8 +471,8 @@ export class DramatizeNarrativeDomain extends BaseDomain<
             const DefaultMotionTo = getDefaultRoleMotion();
             const actorHasBrightnessList: LibTypes.VarArr<boolean> = [];
 
-            layout.shots?.forEach((shot, shotIndex) => {
-                shot.actors?.forEach((act, index) => {
+            layout.shots?.forEach((shot: any, shotIndex: any) => {
+                shot.actors?.forEach((act: any, index: any) => {
                     const effectsLength = (act.effects ?? []).length;
 
                     actorHasBrightnessList[index] =
@@ -507,7 +507,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                     }
                 });
 
-                shot.materials?.forEach(shotMt => {
+                shot.materials?.forEach((shotMt: any) => {
                     setDefaultMotionFrom({
                         target: shotMt,
                         defaultStyle: getDefaultEffectStyle(),
@@ -528,10 +528,10 @@ export class DramatizeNarrativeDomain extends BaseDomain<
             if (!this.internal.isNarrator) {
                 const currentRoleIndex =
                     narrative.composition?.subjects.findIndex(
-                        sub => sub.role === narrative.role,
+                        (sub: any) => sub.role === narrative.role,
                     );
 
-                layout.shots?.[0]?.actors?.forEach((act, index) => {
+                layout.shots?.[0]?.actors?.forEach((act: any, index: any) => {
                     if (
                         !actorHasBrightnessList[index] &&
                         currentRoleIndex !== index
@@ -567,7 +567,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                     baseDelayMS: null,
                     repeat: null,
                     parentId: null,
-                    effects: narrative.effects.scene.map(item => ({
+                    effects: narrative.effects.scene.map((item: any) => ({
                         effect_id: item,
                     })),
                     resourceRecord,
@@ -579,7 +579,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
             }
 
             if (layout) {
-                layout.shots?.forEach(shot => {
+                layout.shots?.forEach((shot: any) => {
                     const { baseDelayMS, repeat } = this.#getShotConfig(
                         shot,
                         layout,
@@ -684,7 +684,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
 
                     if (!this.#isKeepLayout) {
                         if (layout) {
-                            layout.shots?.forEach(shot => {
+                            layout.shots?.forEach((shot: any) => {
                                 const { baseDelayMS, repeat } =
                                     this.#getShotConfig(shot, layout);
 
@@ -764,7 +764,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
 
                 const isRoleKeepLayoutMap = new Map<number, boolean>();
 
-                layoutShot.actors?.forEach((_, index) => {
+                layoutShot.actors?.forEach((_: any, index: any) => {
                     const subject = narrative.composition?.subjects[index];
 
                     const character = ObjectUtils.getValue(
@@ -854,7 +854,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                                 parentId: appearanceElement.id,
                                 baseDelayMS: null,
                                 repeat: null,
-                                effects: subject.effect_names.map(item => ({
+                                effects: subject.effect_names.map((item: any) => ({
                                     effect_id: item,
                                 })),
                                 resourceRecord,
@@ -896,13 +896,13 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                     roles.push(role);
                 });
 
-                layout.shots?.forEach(shot => {
+                layout.shots?.forEach((shot: any) => {
                     const { baseDelayMS, repeat } = this.#getShotConfig(
                         shot,
                         layout,
                     );
 
-                    shot.actors?.forEach((act, index) => {
+                    shot.actors?.forEach((act: any, index: any) => {
                         const role = roles[index];
                         const isRoleKeepLayout = isRoleKeepLayoutMap.get(index);
                         if (
@@ -1098,13 +1098,13 @@ export class DramatizeNarrativeDomain extends BaseDomain<
 
         try {
             if (layout) {
-                layout.shots?.forEach(shot => {
+                layout.shots?.forEach((shot: any) => {
                     const { baseDelayMS, repeat } = this.#getShotConfig(
                         shot,
                         layout,
                     );
 
-                    shot.materials?.forEach(material => {
+                    shot.materials?.forEach((material: any) => {
                         if (material.key != null) {
                             const effectInfo =
                                 resourceRecord.effect[material.key];
@@ -1199,7 +1199,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                 const interaction: DramatizeTypes.DirectorInteraction = {
                     options:
                         narrative.interaction?.script_choice?.options.map(
-                            (text, index) => ({
+                            (text: any, index: any) => ({
                                 id: index.toString(),
                                 text,
                                 value: text,
@@ -1337,8 +1337,8 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 this._isReadyTrigger;
                 return (
-                    this.visualElementList.every(item => item.state.isReady) &&
-                    this.audioElementList.every(item => item.state.isReady)
+                    this.visualElementList.every((item: any) => item.state.isReady) &&
+                    this.audioElementList.every((item: any) => item.state.isReady)
                 );
             },
 
@@ -1365,7 +1365,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                 Promise.all([
                     director.place?.backgroundElement
                         .emitEvent('breakAnimations')
-                        .race.then(currentAnimationStyle => {
+                        .race.then((currentAnimationStyle: any) => {
                             if (
                                 director.place?.backgroundElement &&
                                 currentAnimationStyle
@@ -1381,10 +1381,10 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                         : director.place?.backgroundElement.emitEvent(
                               'removeSpecialEffects',
                           ).race,
-                    ...director.roles.map(async item =>
+                    ...director.roles.map(async (item: any) =>
                         item.appearanceElement
                             ?.emitEvent('breakAnimations')
-                            .race.then(currentAnimationStyle => {
+                            .race.then((currentAnimationStyle: any) => {
                                 if (
                                     item.appearanceElement &&
                                     currentAnimationStyle
@@ -1405,7 +1405,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
 
         await this.until(() => this.internal.play);
 
-        director.roles.forEach(item => {
+        director.roles.forEach((item: any) => {
             if (item.appearanceElement) {
                 item.appearanceElement.state.controlShow = false;
             }
@@ -1414,6 +1414,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
 
     public readonly dramatize = async (isFirst = false) => {
         if (this.#ctx.isDeactivate || this.#ctx.isDramatizeStarted) {
+            console.log('[Narrative] dramatize skipped, isDeactivate=', this.#ctx.isDeactivate, 'isDramatizeStarted=', this.#ctx.isDramatizeStarted);
             return;
         }
         this.#ctx.isDramatizeStarted = true;
@@ -1423,7 +1424,9 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                 this.forceReady();
             }, NextNarrativeReadyTimeoutMS);
         }
+        console.log('[Narrative] dramatize waiting isReady=', this.internal.isReady, 'play=', this.internal.play);
         await this.until(() => this.internal.isReady && this.internal.play);
+        console.log('[Narrative] dramatize unblocked, setting controlShow');
 
         this.emitEvent('breakSceneAnimations');
         this.emitEvent('removeSceneSpecialEffects');
@@ -1451,7 +1454,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
 
         // this.internal.showNewPlaceProfile = !!place?.showProfile;
         if (this.internal.showNewPlaceProfile) {
-            layoutMaterials.forEach(item => {
+            layoutMaterials.forEach((item: any) => {
                 item.state.controlShow = false;
             });
             this.createTimedTask(() => {
@@ -1477,7 +1480,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
 
         this.internal.showNewRoleProfile = !!roles[0]?.showProfile;
 
-        this.internal.visualElementList?.forEach(item => {
+        this.internal.visualElementList?.forEach((item: any) => {
             item.state.controlShow = true;
             this.#execVisualActions(item);
         });
@@ -1549,7 +1552,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
         style: DramatizeTypes.CurrentAnimationStyle,
     ) => {
         const element = this.internal.visualElementList?.find(
-            ele => ele.id === id,
+            (ele: any) => ele.id === id,
         );
         if (element) {
             element.state.currentAnimationStyle = style;

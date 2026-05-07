@@ -1,15 +1,10 @@
-// @ts-nocheck
-import { Text, View } from 'react-native';
-
-import { useInjectRenderController, useReactive, useStyles } from '$/hooks';
-import type { ReactTypes, StyleTypes } from '$/types';
+import { useInjectRenderController, useReactive } from '$/hooks';
+import type { ReactTypes } from '$/types';
 import { optimize } from '$/view';
 
 import { DramatizeEngineController } from '$/component-controllers';
 
 export const NewPlace: ReactTypes.FC = optimize(() => {
-    const styles = useStyles(stylesCreator);
-
     const ctrl = useInjectRenderController(DramatizeEngineController);
 
     const reactiveState = useReactive(() => ({
@@ -22,46 +17,41 @@ export const NewPlace: ReactTypes.FC = optimize(() => {
         return null;
     }
 
+    const textShadow = '0 2px 5px rgba(0,0,0,0.5)';
+
     return (
-        <View style={styles.main}>
-            <Text style={[styles.common, styles.name]}>
+        <div
+            style={{
+                position: 'absolute',
+                bottom: 200,
+                left: 40,
+                borderLeft: '6px solid #EDEDED',
+                paddingLeft: 12,
+            }}
+        >
+            <span
+                style={{
+                    display: 'block',
+                    color: '#EDEDED',
+                    fontWeight: 800,
+                    fontSize: 40,
+                    marginBottom: 6,
+                    textShadow,
+                }}
+            >
                 {reactiveState.name}
-            </Text>
-            <Text style={[styles.common, styles.desc]}>
+            </span>
+            <span
+                style={{
+                    display: 'block',
+                    color: '#EDEDED',
+                    fontWeight: 600,
+                    fontSize: 24,
+                    textShadow,
+                }}
+            >
                 {reactiveState.desc}
-            </Text>
-        </View>
+            </span>
+        </div>
     );
 });
-
-const stylesCreator = (theme: StyleTypes.Theme) =>
-    theme.transformStyles({
-        common: {
-            color: theme.colors.textPrimary,
-            textShadowColor: 'rgba(0, 0, 0, 0.5)',
-            textShadowOffset: {
-                width: 0,
-                height: 2,
-            },
-            textShadowRadius: 5.11,
-        },
-        main: {
-            position: 'absolute',
-
-            bottom: 200,
-            left: 40,
-            borderLeftColor: theme.colors.textPrimary,
-            borderLeftWidth: 6,
-            paddingLeft: 12,
-        },
-        name: {
-            fontWeight: 800,
-            fontSize: 40,
-            marginBottom: 6,
-            fontFamily: theme.fontFamilys.primaryTitle,
-        },
-        desc: {
-            fontWeight: 600,
-            fontSize: 24,
-        },
-    });

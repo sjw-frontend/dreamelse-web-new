@@ -1,17 +1,12 @@
-// @ts-nocheck
-import { Image } from 'expo-image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
 
 import { ASSETS, DRAMATIZE } from '$/consts';
 import {
     useInjectRenderController,
     usePopup,
     useReactive,
-    useStyles,
 } from '$/hooks';
-import type { ReactTypes, StyleTypes } from '$/types';
-import { AsyncPressable } from '$/uis';
+import type { ReactTypes } from '$/types';
 import { StringUtils } from '$/utils';
 import { optimize } from '$/view';
 
@@ -21,7 +16,6 @@ import { DramatizeEngineController } from '$/component-controllers';
 
 export const Captions: ReactTypes.FC = optimize(() => {
     const popup = usePopup();
-    const styles = useStyles(stylesCreator);
 
     const ctrl = useInjectRenderController(DramatizeEngineController);
 
@@ -30,12 +24,12 @@ export const Captions: ReactTypes.FC = optimize(() => {
         speed: ctrl.state.speed,
         show: ctrl.state.narrative?.state.showCaptions,
         allowNext:
-            !ctrl.state.narrative?.state.director.interaction &&
+            !ctrl.state.narrative?.state.director?.interaction &&
             !ctrl.state.isWorldLineEnd,
-        roleName: ctrl.state.narrative?.state.director.captions.roleName,
-        text: ctrl.state.narrative?.state.director.captions.text ?? '',
-        isMe: ctrl.state.narrative?.state.director.captions.isMe,
-        hasTTS: !!ctrl.state.narrative?.state.director.captions.ttsElement,
+        roleName: ctrl.state.narrative?.state.director?.captions?.roleName,
+        text: ctrl.state.narrative?.state.director?.captions?.text ?? '',
+        isMe: ctrl.state.narrative?.state.director?.captions?.isMe,
+        hasTTS: !!ctrl.state.narrative?.state.director?.captions?.ttsElement,
     }));
 
     const [forceTypingComplete, setForceTypingComplete] = useState(false);
@@ -79,32 +73,70 @@ export const Captions: ReactTypes.FC = optimize(() => {
     }
 
     return (
-        <BlurBackground style={styles.view}>
-            <AsyncPressable style={styles.main} onPress={handleNext}>
-                <View style={styles.titleView}>
+        <BlurBackground
+            style={{
+                paddingLeft: 24,
+                paddingRight: 24,
+                paddingTop: 12,
+                paddingBottom: 12,
+                width: '100%',
+            } as React.CSSProperties}
+        >
+            <div onClick={handleNext} style={{ cursor: 'pointer' }}>
+                {/* title row */}
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        height: 34,
+                        position: 'relative',
+                    }}
+                >
                     {hasTitle && (
-                        <Text
-                            style={[
-                                styles.title,
-                                reactiveState.isMe && styles.right,
-                            ]}
+                        <span
+                            style={{
+                                color: '#EDEDED',
+                                fontWeight: 800,
+                                fontSize: 24,
+                                flex: 1,
+                                borderBottom: '1px solid rgba(255,255,255,0.5)',
+                                height: 34,
+                                lineHeight: '34px',
+                                textAlign: reactiveState.isMe ? 'right' : 'left',
+                            }}
                         >
                             {reactiveState.roleName}
-                        </Text>
+                        </span>
                     )}
                     {reactiveState.allowNext && (
-                        <View style={styles.next}>
-                            <Image
-                                source={ASSETS.Dramatize.next}
-                                style={styles.nextIcon}
+                        <div
+                            style={{
+                                height: 34,
+                                paddingLeft: 15,
+                                display: 'flex',
+                                alignItems: 'center',
+                                position: 'absolute',
+                                right: 0,
+                            }}
+                        >
+                            <img
+                                src={ASSETS.Dramatize.next}
+                                alt=""
+                                style={{ width: 20, height: 20 }}
                             />
-                        </View>
+                        </div>
                     )}
-                </View>
+                </div>
+                {/* typewriter text */}
                 <SmoothTypewriter
                     typingSpeedMS={DRAMATIZE.TextDisplayTimePerCharMS}
                     text={reactiveState.text}
-                    textStyle={[styles.text, !hasTitle && styles.textNarrator]}
+                    textStyle={{
+                        fontWeight: hasTitle ? 600 : 900,
+                        fontSize: hasTitle ? 20 : 24,
+                        color: '#EDEDED',
+                    }}
                     lineCount={3}
                     lineHeight={hasTitle ? 24 : 38}
                     onComplete={onTypingComplete}
@@ -113,57 +145,7 @@ export const Captions: ReactTypes.FC = optimize(() => {
                     isComplete={forceTypingComplete}
                     startLineIndex={1}
                 />
-            </AsyncPressable>
+            </div>
         </BlurBackground>
     );
 });
-
-const stylesCreator = (theme: StyleTypes.Theme) =>
-    theme.transformStyles({
-        view: {
-            paddingHorizontal: 24,
-            paddingVertical: 12,
-            width: '100%',
-            alignItems: 'stretch',
-        },
-        main: {},
-        right: { textAlign: 'right' },
-        titleView: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            height: 34,
-        },
-        next: {
-            height: 34,
-            paddingLeft: 15,
-            alignItems: 'center',
-            flexDirection: 'row',
-            position: 'absolute',
-            right: 0,
-        },
-        nextIcon: {
-            width: 20,
-            height: 20,
-        },
-        title: {
-            color: theme.colors.textPrimary,
-            fontWeight: 800,
-            fontSize: 24,
-            textAlignVertical: 'center',
-            height: 34,
-            fontFamily: theme.fontFamilys.primaryTitle,
-            flex: 1,
-            borderBottomColor: 'rgba(255, 255, 255, 0.5)',
-            borderBottomWidth: 1,
-        },
-        text: {
-            fontWeight: 600,
-            fontSize: 20,
-            color: theme.colors.textPrimary,
-        },
-        textNarrator: {
-            fontWeight: 900,
-            fontSize: 24,
-            fontFamily: theme.fontFamilys.primaryTitle,
-        },
-    });

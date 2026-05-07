@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { useInjectRenderController, useReactive, useWatch } from '$/hooks';
+import { useInjectRenderController, useReactive } from '$/hooks';
 import type { DramatizeTypes, ReactTypes } from '$/types';
 import { optimize } from '$/view';
 
@@ -31,102 +31,54 @@ export const CanvasImage: ReactTypes.FC<Props> = optimize(({ id }) => {
 
     const ctrl = useInjectRenderController(DramatizeEngineController);
 
-    const reactiveState = useReactive(() => ({
-        element:
+    const reactiveState = useReactive(() => {
+        const element =
             ctrl.state.narrative?.context.imageElementRecord[id] ??
-            ctrl.state.nextNarrative?.context.imageElementRecord[id],
-        isDry: ctrl.state.isDry,
-    }));
+            ctrl.state.nextNarrative?.context.imageElementRecord[id];
+        const controlShow = element?.state.controlShow;
+        const style = element?.state.style;
+        return {
+            element,
+            isDry: ctrl.state.isDry,
+            show: !!controlShow && !!style,
+            style,
+            translate: element?.state.translate,
+            anchor: element?.state.anchor,
+        };
+    });
 
     const element = reactiveState.element;
-    const getShow = (
-        controlShow: LibTypes.Nullable<boolean>,
-        style: DramatizeTypes.DirectorVisualStyle | undefined,
-    ) => !!controlShow && !!style;
 
     const [elementProps, setElementProps] = useState<ElementProps | undefined>(
         element && {
-            show: false,
-            style: element.state.style,
-            translate: null,
-            anchor: null,
+            show: reactiveState.show,
+            style: reactiveState.style,
+            translate: reactiveState.translate ?? null,
+            anchor: reactiveState.anchor ?? null,
             animation: null,
             specialEffects: [],
         },
     );
 
-    useWatch(
-        () => element?.state.controlShow,
-        controlShow => {
-            const show = getShow(controlShow, element?.state.style);
-            setElementProps(
-                prevState =>
-                    prevState &&
-                    ({
-                        ...prevState,
-                        show,
-                    } satisfies ElementProps),
-            );
-        },
-        {
-            immediate: true,
-        },
-        [element],
-    );
+    useEffect(() => {
+        if (!elementProps) return;
+        setElementProps(prev => prev && { ...prev, show: reactiveState.show });
+    }, [reactiveState.show]);
 
-    useWatch(
-        () => element?.state.style,
-        style => {
-            const show = getShow(element?.state.controlShow, style);
-            setElementProps(
-                prevState =>
-                    prevState &&
-                    ({
-                        ...prevState,
-                        show,
-                        style,
-                    } satisfies ElementProps),
-            );
-        },
-        {
-            immediate: true,
-        },
-        [element],
-    );
+    useEffect(() => {
+        if (!elementProps) return;
+        setElementProps(prev => prev && { ...prev, style: reactiveState.style, show: reactiveState.show });
+    }, [reactiveState.style]);
 
-    useWatch(
-        () => element?.state.translate,
-        translate =>
-            setElementProps(
-                prevState =>
-                    prevState &&
-                    ({
-                        ...prevState,
-                        translate,
-                    } satisfies ElementProps),
-            ),
-        {
-            immediate: true,
-        },
-        [element],
-    );
+    useEffect(() => {
+        if (!elementProps) return;
+        setElementProps(prev => prev && { ...prev, translate: reactiveState.translate ?? null });
+    }, [reactiveState.translate]);
 
-    useWatch(
-        () => element?.state.anchor,
-        anchor =>
-            setElementProps(
-                prevState =>
-                    prevState &&
-                    ({
-                        ...prevState,
-                        anchor,
-                    } satisfies ElementProps),
-            ),
-        {
-            immediate: true,
-        },
-        [element],
-    );
+    useEffect(() => {
+        if (!elementProps) return;
+        setElementProps(prev => prev && { ...prev, anchor: reactiveState.anchor ?? null });
+    }, [reactiveState.anchor]);
 
     useEffect(() => {
         element?.addEventListener('breakAnimations', () =>
@@ -136,9 +88,9 @@ export const CanvasImage: ReactTypes.FC<Props> = optimize(({ id }) => {
             ref.current?.removeSpecialEffects();
         });
 
-        element?.addEventListener('runVisualAnimation', animation =>
+        element?.addEventListener('runVisualAnimation', (animation: any) =>
             setElementProps(
-                prevState =>
+                (prevState: any) =>
                     prevState &&
                     ({
                         ...prevState,
@@ -146,9 +98,9 @@ export const CanvasImage: ReactTypes.FC<Props> = optimize(({ id }) => {
                     } satisfies ElementProps),
             ));
 
-        element?.addEventListener('runVisualSpecialEffect', specialEffect =>
+        element?.addEventListener('runVisualSpecialEffect', (specialEffect: any) =>
             setElementProps(
-                prevState =>
+                (prevState: any) =>
                     prevState &&
                     ({
                         ...prevState,
