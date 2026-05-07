@@ -59,6 +59,7 @@ export const usePlay = (
                 }
             }, AudioPlayStatusCheckIntervalMS);
         } else if (volumeFade) {
+            clearInterval(playTimerRef.current);
             const currentVolume = audio.volume;
             volumeFadeTimerRef.current = setInterval(() => {
                 const newVolume = audio.volume - VolumeFadeStep;
@@ -70,6 +71,7 @@ export const usePlay = (
                 }
             }, VolumeFadeDelayMS);
         } else {
+            clearInterval(playTimerRef.current);
             audio.pause();
         }
 

@@ -37,8 +37,8 @@ export const Audio: ReactTypes.FC<Props> = optimize(
             onFinishRef.current = onFinish;
         }, [onReady, onFinish]);
 
-        // Create HTMLAudioElement once
-        useMemo(() => {
+        // Create HTMLAudioElement once, cleanup on unmount
+        useEffect(() => {
             const audio = new window.Audio(file.uri);
             audioRef.current = audio;
 
@@ -58,6 +58,7 @@ export const Audio: ReactTypes.FC<Props> = optimize(
             return () => {
                 audio.pause();
                 audio.src = '';
+                audioRef.current = null;
             };
         }, []);
 
