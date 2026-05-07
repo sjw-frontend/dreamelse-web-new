@@ -25,7 +25,7 @@ export const ScriptPreparePlayPage = optimize(() => {
     }));
 
     const roleList = useMemo(
-        () => state.roles?.filter((item: ScriptTypes.RoleInfo) => !item.attrs.isNpc),
+        () => state.roles?.filter((item: ScriptTypes.RoleInfo) => !item.attrs?.isNpc),
         [state.roles],
     );
 
