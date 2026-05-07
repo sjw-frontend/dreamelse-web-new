@@ -12,7 +12,6 @@ export const PlayScriptOpeningPage = optimize(() => {
     const [engineCtrl, EngineProvider] = useRegisterRenderController(DramatizeEngineController);
 
     useEffect(() => {
-        console.log('[PlayScriptOpening UI] setRelatedControllers called');
         ctrl.setRelatedControllers({ dramatizeEngineCtrl: engineCtrl });
     }, []);
 
@@ -65,7 +64,7 @@ export const PlayScriptOpeningPage = optimize(() => {
                     />
 
                     {/* Bottom controls */}
-                    <div className="absolute bottom-6 left-0 right-0 z-20 flex items-center justify-between px-4">
+                    <div className="absolute bottom-6 left-4 z-20">
                         <button
                             type="button"
                             onClick={ctrl.onChangeSpeed}
@@ -74,16 +73,17 @@ export const PlayScriptOpeningPage = optimize(() => {
                         >
                             {speedLabel}
                         </button>
-
-                        <button
-                            type="button"
-                            onClick={ctrl.toScriptPreparePlay}
-                            className="h-12 px-4 rounded-3xl text-text-primary text-base font-semibold"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
-                        >
-                            跳过剧情
-                        </button>
                     </div>
+
+                    {/* Skip button — right bottom */}
+                    <button
+                        type="button"
+                        onClick={ctrl.toScriptPreparePlay}
+                        className="absolute bottom-6 right-3 z-20 h-12 px-[14px] rounded-3xl text-text-primary text-base font-semibold"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
+                    >
+                        跳过剧情
+                    </button>
                 </div>
             </EngineProvider>
         </RenderParentProvider>
