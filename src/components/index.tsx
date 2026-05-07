@@ -26,3 +26,7 @@ export type SendVoiceMessageResult = { text: string };
 
 // ScriptWaterfall re-export (actual component)
 export { ScriptWaterfall } from './script-waterfall/script-waterfall-ui';
+
+// Character components
+export { CharacterMomentCard } from './character-moment-card';
+export { CharacterPickList, CharacterCardEnum } from './character-pick-list';
