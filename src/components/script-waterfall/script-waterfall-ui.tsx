@@ -117,7 +117,7 @@ export const ScriptWaterfall = optimize((props: Props) => {
         <RenderParentProvider>
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 {/* Two-column waterfall: 8px left/right padding, 8px center gap — matches RN */}
-                <div className="flex flex-row" style={{ paddingLeft: 8, paddingRight: 8, gap: 8 }}>
+                <div className="flex flex-row" style={{ gap: 8 }}>
                     {/* Left column */}
                     <div className="flex flex-col" style={{ width: itemContentWidth }}>
                         {leftCol.map(item => renderCard(item, 0))}
