@@ -3,12 +3,14 @@ import { useRef } from 'react';
 import { useListenEvent, useReactive, useRegisterRenderController, useZoneController } from '$/hooks';
 import { UserController } from '$/controllers';
 import { optimize } from '$/view';
+import { withAuth } from '$/hocs';
+import type { ReactTypes } from '$/types';
 import { Pressable, ScrollView } from '$/uis/primitives';
 import type { CharacterTypes } from '$/types';
 import { CharacterMomentCard } from '$/components/character-moment-card';
 import { CharacterListController } from './character-list-controller';
 
-export const CharacterListPage = optimize(() => {
+export const CharacterListPage: ReactTypes.FC = withAuth(optimize(() => {
     const userCtrl = useZoneController(UserController);
     const [ctrl, RenderParentProvider] = useRegisterRenderController(CharacterListController);
     const listRef = useRef<HTMLDivElement>(null);
@@ -78,4 +80,4 @@ export const CharacterListPage = optimize(() => {
             </div>
         </RenderParentProvider>
     );
-});
+}));

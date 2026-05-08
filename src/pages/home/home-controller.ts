@@ -154,19 +154,6 @@ export class HomeController extends BaseRenderController<State, InternalState> {
         );
 
         this.watch(
-            () => this.internal.routeFocused,
-            (routeFocused, _, unwatch) => {
-                if (routeFocused === true) {
-                    const loggedInUser = this.#userController.state.loggedInUser;
-                    if (!loggedInUser) {
-                        this.#routerController.toLogin();
-                    }
-                    unwatch();
-                }
-            },
-        );
-
-        this.watch(
             () =>
                 !!this.#userController.state.loggedInUser &&
                 this.internal.isCharacterMode,

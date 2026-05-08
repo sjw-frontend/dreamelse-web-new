@@ -4,7 +4,8 @@ import { Image, Pressable, ScrollView } from '$/uis/primitives';
 import { Button } from '$/uis/button/button-ui';
 import { cn } from '$/utils/cn';
 import { optimize } from '$/view';
-import type { ScriptTypes } from '$/types';
+import { withAuth } from '$/hocs';
+import type { ReactTypes, ScriptTypes } from '$/types';
 import { ScriptRoleEditor } from '$/components/script-role-editor/script-role-editor-ui';
 import { I18nTexts } from './script-prepare-play-const';
 import { ScriptPreparePlayController } from './script-prepare-play-controller';
@@ -101,7 +102,7 @@ const getImageFaceInfo = (
 const CARD_VIEW_W = 100;
 const CARD_VIEW_H = 140;
 
-export const ScriptPreparePlayPage = optimize(() => {
+export const ScriptPreparePlayPage: ReactTypes.FC = withAuth(optimize(() => {
     const [ctrl, RenderParentProvider] = useRegisterRenderController(ScriptPreparePlayController);
 
     const state = useReactive(() => ({
@@ -447,4 +448,4 @@ export const ScriptPreparePlayPage = optimize(() => {
             )}
         </RenderParentProvider>
     );
-});
+}));

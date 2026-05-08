@@ -2,11 +2,13 @@
 import { useCallback } from 'react';
 import { useListenEvent, usePopup, useReactive, useRegisterRenderController } from '$/hooks';
 import { optimize } from '$/view';
+import { withAuth } from '$/hocs';
+import type { ReactTypes } from '$/types';
 import { AbilityBackground, AbilityFace, CreateForm, PickList } from './@parts';
 import { CharacterCreateController } from './character-create-controller';
 import { I18nTexts } from './character-create-const';
 
-export const CharacterCreatePage = optimize(() => {
+export const CharacterCreatePage: ReactTypes.FC = withAuth(optimize(() => {
     const popup = usePopup();
     const [ctrl, RenderParentProvider] = useRegisterRenderController(CharacterCreateController);
 
@@ -207,4 +209,4 @@ export const CharacterCreatePage = optimize(() => {
             </div>
         </RenderParentProvider>
     );
-});
+}));

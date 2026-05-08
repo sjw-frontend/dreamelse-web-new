@@ -5,6 +5,8 @@ import { usePopup } from '$/hooks';
 import { ScrollView, Pressable } from '$/uis/primitives';
 import { cn } from '$/utils/cn';
 import { optimize } from '$/view';
+import { withAuth } from '$/hocs';
+import type { ReactTypes } from '$/types';
 import { UserController } from '$/controllers';
 import { MeController } from './me-controller';
 import { PlayList, CreateList, CollectList } from './@parts';
@@ -204,7 +206,7 @@ const SettingsFooter = optimize(({ ctrl }: { ctrl: InstanceType<typeof MeControl
     </div>
 ));
 
-export const MePage = optimize(() => {
+export const MePage: ReactTypes.FC = withAuth(optimize(() => {
     const [ctrl, RenderParentProvider] = useRegisterRenderController(MeController);
 
     return (
@@ -239,4 +241,4 @@ export const MePage = optimize(() => {
             </div>
         </RenderParentProvider>
     );
-});
+}));
