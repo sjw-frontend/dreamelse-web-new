@@ -1,9 +1,8 @@
 import { useRegisterRenderController } from '$/hooks';
 import { optimize } from '$/view';
+import { APP } from '$/consts';
 
 import { AboutController } from './about-controller';
-
-const APP_VERSION = '1.0.0';
 
 export const AboutPage = optimize(() => {
     const [ctrl, RenderParentProvider] = useRegisterRenderController(AboutController);
@@ -35,12 +34,10 @@ export const AboutPage = optimize(() => {
                 {/* Centered content */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none">
                     {/* App icon placeholder */}
-                    <div className="w-[68px] h-[68px] rounded-[14px] bg-brand-green flex items-center justify-center">
-                        <span className="text-3xl">🎬</span>
-                    </div>
+                    <img src="/assets/images/logo.png" alt="演我" style={{ width: 68, height: 68, borderRadius: 14 }} />
                     <span className="text-text text-3xl font-semibold">演我</span>
                     <span className="text-text/48 text-[15px] font-normal tracking-wide">
-                        版本 {APP_VERSION}
+                        版本 {APP.Version}
                     </span>
                 </div>
             </div>

@@ -13,6 +13,7 @@ export const SplashPage = optimize(() => {
     return (
         <RenderParentProvider>
             <div className="flex flex-col items-center justify-center w-full h-full bg-[#0D0D0D]">
+                <img src="/assets/images/logo.png" alt="演我" style={{ width: 112, height: 112 }} />
                 <h1
                     className="text-5xl font-semibold text-white"
                     style={{ fontFamily: "'Playfair Display', serif" }}

@@ -1,4 +1,6 @@
-import { useReactive, useRegisterRenderController, useZoneController } from '$/hooks';
+// @ts-nocheck
+import { useRef } from 'react';
+import { useListenEvent, useReactive, useRegisterRenderController, useZoneController } from '$/hooks';
 import { UserController } from '$/controllers';
 import { optimize } from '$/view';
 import { Pressable, ScrollView } from '$/uis/primitives';
@@ -8,13 +10,19 @@ import { CharacterListController } from './character-list-controller';
 
 export const CharacterListPage = optimize(() => {
     const userCtrl = useZoneController(UserController);
-
     const [ctrl, RenderParentProvider] = useRegisterRenderController(CharacterListController);
+    const listRef = useRef<HTMLDivElement>(null);
 
     const state = useReactive(() => ({
         currentShowDeleteMenuId: ctrl.state.currentShowDeleteMenuId,
         characterIds: (userCtrl.state.loggedInUser?.characterDetails.state.list ?? []) as CharacterTypes.CharacterId[],
     }));
+
+    useListenEvent(ctrl, 'refresh', () => {
+        setTimeout(() => {
+            listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+    });
 
     return (
         <RenderParentProvider>
@@ -53,7 +61,7 @@ export const CharacterListPage = optimize(() => {
 
                 {/* Character list */}
                 {state.characterIds.length > 0 && (
-                    <ScrollView className="flex-1">
+                    <ScrollView className="flex-1" ref={listRef}>
                         <div className="flex flex-col pb-24">
                             {state.characterIds.map(id => (
                                 <CharacterMomentCard

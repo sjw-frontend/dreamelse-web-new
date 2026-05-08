@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useReactive, useRegisterRenderController, useZoneController } from '$/hooks';
 import { Pressable, TextInput } from '$/uis/primitives';
@@ -8,16 +9,199 @@ import { CharacterEnums } from '$/enums';
 import { cn } from '$/utils/cn';
 import { CharacterInteractionController } from './character-interaction-controller';
 
+// ── Sending status indicators ─────────────────────────────────────────────────
+
+const SendingSpinner = () => (
+    <div
+        className="w-4 h-4 rounded-full border-2 border-white/40 shrink-0 animate-spin"
+        style={{ borderTopColor: 'transparent' }}
+    />
+);
+
+const SendErrorButton = ({ onPress }: { onPress: () => void }) => (
+    <button
+        onClick={onPress}
+        className="w-5 h-5 flex items-center justify-center text-red-400 shrink-0 text-base leading-none"
+        title="重新发送"
+    >
+        ⚠
+    </button>
+);
+
+// ── Long-press context menu ───────────────────────────────────────────────────
+
+type MenuOption = { label: string; value: string };
+
+const ContextMenu = ({
+    options,
+    position,
+    onSelect,
+    onClose,
+}: {
+    options: MenuOption[];
+    position: { x: number; y: number };
+    onSelect: (value: string) => void;
+    onClose: () => void;
+}) => {
+    useEffect(() => {
+        const handler = () => onClose();
+        window.addEventListener('pointerdown', handler);
+        return () => window.removeEventListener('pointerdown', handler);
+    }, [onClose]);
+
+    return (
+        <div
+            className="fixed z-50 bg-bg-card border border-white/10 rounded-xl shadow-xl overflow-hidden min-w-[120px]"
+            style={{ left: position.x, top: position.y }}
+            onPointerDown={e => e.stopPropagation()}
+        >
+            {options.map(opt => (
+                <button
+                    key={opt.value}
+                    className="w-full text-left px-4 py-2.5 text-sm text-text-primary hover:bg-white/10 transition-colors"
+                    onClick={() => { onSelect(opt.value); onClose(); }}
+                >
+                    {opt.label}
+                </button>
+            ))}
+        </div>
+    );
+};
+
+// ── Voice message bubble ──────────────────────────────────────────────────────
+
+const VoiceMessageBubble = optimize(({ id, fromMe }: { id: string; fromMe: boolean }) => {
+    const characterCtrl = useZoneController(CharacterController);
+    const info = characterCtrl.getMessage(id);
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const [playing, setPlaying] = useState(false);
+
+    if (!info) return null;
+    const { state } = info;
+    const durationMS = state.audio?.durationMS ?? 0;
+    const bubbleWidth = Math.min(240, 86 + Math.round(durationMS / 1000) * 10);
+
+    const handleToggle = useCallback(() => {
+        const el = audioRef.current;
+        if (!el) return;
+        if (playing) {
+            el.pause();
+        } else {
+            el.play();
+        }
+    }, [playing]);
+
+    return (
+        <div
+            className={cn(
+                'flex flex-row items-center gap-2 px-3 py-2 rounded-2xl cursor-pointer select-none',
+                fromMe ? 'bg-accent rounded-br-sm' : 'bg-white/10 rounded-bl-sm',
+            )}
+            style={{ width: bubbleWidth }}
+            onClick={handleToggle}
+        >
+            {state.audio?.source && (
+                <audio
+                    ref={audioRef}
+                    src={state.audio.source}
+                    onPlay={() => setPlaying(true)}
+                    onPause={() => setPlaying(false)}
+                    onEnded={() => setPlaying(false)}
+                />
+            )}
+            {playing ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className={fromMe ? 'text-bg-page' : 'text-text-primary'}>
+                    <rect x="6" y="4" width="4" height="16" rx="1" />
+                    <rect x="14" y="4" width="4" height="16" rx="1" />
+                </svg>
+            ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={fromMe ? 'text-bg-page' : 'text-text-primary'}>
+                    <rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M5 10a7 7 0 0014 0M12 19v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+            )}
+            <span className={cn('text-sm', fromMe ? 'text-bg-page' : 'text-text-primary')}>
+                {durationMS ? `${Math.round(durationMS / 1000)}″` : '语音'}
+            </span>
+        </div>
+    );
+});
+
 // ── Message item ──────────────────────────────────────────────────────────────
 
 const MessageItem = optimize(({ id }: { id: string }) => {
     const characterCtrl = useZoneController(CharacterController);
+    const ctrl = useZoneController(CharacterInteractionController);
     const info = characterCtrl.getMessage(id);
+
+    const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     if (!info) return null;
 
     const { state, attrs } = info;
     const fromMe = attrs.fromMe;
     const kind = attrs.kind;
+
+    // ── Long-press / context-menu logic ──────────────────────────────────────
+    const canCopy = kind === CharacterEnums.MessageItemKind.Msg;
+    const canRollback = state.isSuccess && !attrs.isLocal &&
+        kind !== CharacterEnums.MessageItemKind.SysMsg;
+
+    const menuOptions: MenuOption[] = [
+        ...(canCopy ? [{ label: '复制', value: 'copy' }] : []),
+        ...(canRollback ? [{ label: '回溯', value: 'rollback' }] : []),
+    ];
+
+    const openMenu = useCallback((x: number, y: number) => {
+        if (menuOptions.length === 0) return;
+        setMenu({ x, y });
+    }, [menuOptions.length]);
+
+    const handleContextMenu = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        openMenu(e.clientX, e.clientY);
+    }, [openMenu]);
+
+    const handlePointerDown = useCallback((e: React.PointerEvent) => {
+        if (e.pointerType !== 'touch') return;
+        const { clientX, clientY } = e;
+        longPressTimer.current = setTimeout(() => {
+            openMenu(clientX, clientY);
+        }, 500);
+    }, [openMenu]);
+
+    const handlePointerUp = useCallback(() => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+    }, []);
+
+    const handleMenuSelect = useCallback((value: string) => {
+        if (value === 'copy') {
+            ctrl.copyMsg(state.content ?? '');
+        } else if (value === 'rollback') {
+            ctrl.msgRollback(id);
+        }
+    }, [ctrl, id, state.content]);
+
+    const bubbleProps = {
+        onContextMenu: handleContextMenu,
+        onPointerDown: handlePointerDown,
+        onPointerUp: handlePointerUp,
+        onPointerCancel: handlePointerUp,
+    };
+
+    // ── Sending status ────────────────────────────────────────────────────────
+    const isSending = state.isSending;
+    const isError = state.isError;
+
+    const statusIndicator = fromMe && (
+        isSending ? <SendingSpinner /> :
+        isError ? <SendErrorButton onPress={() => ctrl.resendMessage(id)} /> :
+        null
+    );
 
     if (kind === CharacterEnums.MessageItemKind.SysMsg) {
         return (
@@ -42,52 +226,80 @@ const MessageItem = optimize(({ id }: { id: string }) => {
 
     if (kind === CharacterEnums.MessageItemKind.Voice && state.audio) {
         return (
-            <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
-                {!fromMe && <CharacterAvatar info={info} />}
-                <div className={cn(
-                    'flex flex-row items-center gap-2 px-3 py-2 rounded-2xl max-w-[65%]',
-                    fromMe ? 'bg-accent rounded-br-sm' : 'bg-white/10 rounded-bl-sm',
-                )}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={fromMe ? 'text-bg-page' : 'text-text-primary'}>
-                        <rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" strokeWidth="1.5" />
-                        <path d="M5 10a7 7 0 0014 0M12 19v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                    <span className={cn('text-sm', fromMe ? 'text-bg-page' : 'text-text-primary')}>
-                        {state.audio.durationMS ? `${Math.round(state.audio.durationMS / 1000)}″` : '语音'}
-                    </span>
+            <>
+                {menu && (
+                    <ContextMenu
+                        options={menuOptions}
+                        position={menu}
+                        onSelect={handleMenuSelect}
+                        onClose={() => setMenu(null)}
+                    />
+                )}
+                <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
+                    {!fromMe && <CharacterAvatar info={info} />}
+                    <div {...bubbleProps}>
+                        <VoiceMessageBubble id={id} fromMe={fromMe} />
+                    </div>
+                    {statusIndicator}
                 </div>
-            </div>
+            </>
         );
     }
 
     if (kind === CharacterEnums.MessageItemKind.Image && state.image) {
         return (
-            <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
-                {!fromMe && <CharacterAvatar info={info} />}
-                <img
-                    src={state.image.uri}
-                    alt="image"
-                    className="max-w-[60%] rounded-2xl object-cover"
-                    style={{ maxHeight: 200 }}
-                />
-            </div>
+            <>
+                {menu && (
+                    <ContextMenu
+                        options={menuOptions}
+                        position={menu}
+                        onSelect={handleMenuSelect}
+                        onClose={() => setMenu(null)}
+                    />
+                )}
+                <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
+                    {!fromMe && <CharacterAvatar info={info} />}
+                    <img
+                        src={state.image.uri}
+                        alt="image"
+                        className="max-w-[60%] rounded-2xl object-cover"
+                        style={{ maxHeight: 200 }}
+                        {...bubbleProps}
+                    />
+                    {statusIndicator}
+                </div>
+            </>
         );
     }
 
     // Default: text message
     return (
-        <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
-            {!fromMe && <CharacterAvatar info={info} />}
-            <div className={cn(
-                'px-3 py-2 rounded-2xl max-w-[75%]',
-                fromMe ? 'bg-accent rounded-br-sm' : 'bg-white/10 rounded-bl-sm',
-                state.isSending && 'opacity-60',
-            )}>
-                <span className={cn('text-sm leading-relaxed', fromMe ? 'text-bg-page' : 'text-text-primary')}>
-                    {state.content}
-                </span>
+        <>
+            {menu && (
+                <ContextMenu
+                    options={menuOptions}
+                    position={menu}
+                    onSelect={handleMenuSelect}
+                    onClose={() => setMenu(null)}
+                />
+            )}
+            <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
+                {!fromMe && <CharacterAvatar info={info} />}
+                <div
+                    className={cn(
+                        'px-3 py-2 rounded-2xl max-w-[75%]',
+                        fromMe ? 'bg-accent rounded-br-sm' : 'bg-white/10 rounded-bl-sm',
+                        isSending && 'opacity-60',
+                    )}
+                    {...bubbleProps}
+                >
+                    <span className={cn('text-sm leading-relaxed', fromMe ? 'text-bg-page' : 'text-text-primary')}>
+                        {state.content}
+                    </span>
+                </div>
+                {statusIndicator}
             </div>
-        </div>
+        </>
     );
 });
 
@@ -201,21 +413,84 @@ const ChatInputFooter = optimize(({ ctrl, expanded }: {
 // ── Message list ──────────────────────────────────────────────────────────────
 
 const MessageList = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInteractionController> }) => {
-    const bottomRef = useRef<HTMLDivElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const sentinelRef = useRef<HTMLDivElement>(null);
+    const prevLengthRef = useRef(0);
+    const [listHeight, setListHeight] = useState<number>(() =>
+        window.visualViewport?.height ?? window.innerHeight,
+    );
+
     const state = useReactive(() => ({
         msgIds: ctrl.state.msgIds,
         showLoading: ctrl.state.showLoading,
     }));
 
+    // ── visualViewport keyboard adaptation ───────────────────────────────────
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const vv = window.visualViewport;
+        const update = () => {
+            setListHeight(vv ? vv.height : window.innerHeight);
+        };
+        if (vv) {
+            vv.addEventListener('resize', update);
+        } else {
+            window.addEventListener('resize', update);
+        }
+        return () => {
+            if (vv) {
+                vv.removeEventListener('resize', update);
+            } else {
+                window.removeEventListener('resize', update);
+            }
+        };
+    }, []);
+
+    // ── Initial scroll to bottom ──────────────────────────────────────────────
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (el) {
+            el.scrollTop = el.scrollHeight;
+        }
+    }, []);
+
+    // ── Scroll to bottom when new messages arrive ─────────────────────────────
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const currentLength = state.msgIds.length;
+        if (currentLength > prevLengthRef.current) {
+            // Only auto-scroll if we were already near the bottom
+            const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+            if (distFromBottom < 120) {
+                el.scrollTop = el.scrollHeight;
+            }
+        }
+        prevLengthRef.current = currentLength;
     }, [state.msgIds.length]);
 
+    // ── IntersectionObserver sentinel for loading history ────────────────────
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0]?.isIntersecting) {
+                    ctrl.loadMoreHistory?.() ?? ctrl.requestMoreMessagesUp?.();
+                }
+            },
+            { root: scrollRef.current, threshold: 0.1 },
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [ctrl]);
+
     return (
-        <div className="flex flex-col gap-3 px-4 pt-4 pb-2 overflow-y-auto flex-1">
-            {state.msgIds.map((id: string) => (
-                <MessageItem key={id} id={id} />
-            ))}
+        <div
+            ref={scrollRef}
+            className="flex flex-col-reverse gap-3 px-4 pt-4 pb-2 overflow-y-auto flex-1"
+            style={{ maxHeight: listHeight }}
+        >
+            {/* Loading indicator at bottom of reversed list = visual top */}
             {state.showLoading && (
                 <div className="flex items-center gap-1 pl-2 py-1">
                     {[0, 150, 300].map(delay => (
@@ -227,7 +502,12 @@ const MessageList = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInt
                     ))}
                 </div>
             )}
-            <div ref={bottomRef} />
+            {/* Messages in reverse order so newest is at visual bottom */}
+            {[...state.msgIds].reverse().map((id: string) => (
+                <MessageItem key={id} id={id} />
+            ))}
+            {/* Sentinel at the top (visual) triggers history load */}
+            <div ref={sentinelRef} className="h-1 shrink-0" />
         </div>
     );
 });

@@ -91,6 +91,7 @@ export class Animated<
         loop?: boolean,
         loopBack?: boolean,
         speed?: number,
+        onComplete?: () => void,
     ) {
         super();
         this.progress = 0;
@@ -104,6 +105,8 @@ export class Animated<
         this.loopBack = loopBack ?? false;
 
         this.speed = speed ?? 1;
+
+        this.onComplete = onComplete;
 
         this.meta = Animated.createComponentMeta(
             componentClass,
@@ -122,6 +125,8 @@ export class Animated<
     public loop: boolean;
     public loopBack: boolean;
     public speed: number;
+
+    public onComplete?: () => void;
 
     public override meta: string;
 }

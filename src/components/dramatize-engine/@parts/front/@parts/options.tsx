@@ -87,8 +87,8 @@ export const Options: ReactTypes.FC<OptionsProps> = optimize(
         );
 
         const onSelect = useCallback(
-            (option: { value: string }) => {
-                handleInteract(option.value);
+            (option: { value?: string; text?: string; label?: string }) => {
+                handleInteract((option as any).value ?? '');
             },
             [handleInteract],
         );
@@ -262,8 +262,8 @@ export const Options: ReactTypes.FC<OptionsProps> = optimize(
                 {reactiveState.showCountDown && (
                     <div style={reactiveState.isInteractPause ? { width: 0, height: 0, position: 'absolute', opacity: 0, overflow: 'hidden' } : { width: '100%', marginTop: 16, marginBottom: 16 }}>
                         <Countdown
-                            seconds={MathUtils.ms2s(reactiveState.timeoutMS)}
-                            onEnd={onCountdownComplete}
+                            duration={MathUtils.ms2s(reactiveState.timeoutMS)}
+                            onComplete={onCountdownComplete}
                         />
                     </div>
                 )}

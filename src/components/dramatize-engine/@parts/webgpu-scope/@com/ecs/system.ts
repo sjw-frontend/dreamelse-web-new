@@ -290,10 +290,12 @@ const handleAnimationLoop = (
         progress: number,
     }>,
     progress: number,
+    onComplete?: () => void,
 ) => {
     if (progress >= 1) {
         if (!animated.loop) {
             entity.delete(animatedName);
+            onComplete?.();
         } else if (animated.loopBack) {
             animated.speed *= -1;
         } else {
@@ -340,7 +342,7 @@ export const animateLocateSystem = (
             );
         }
 
-        handleAnimationLoop(entity, key, animatedRegion, progress);
+        handleAnimationLoop(entity, key, animatedRegion, progress, animatedRegion.onComplete);
     }
 };
 
@@ -404,7 +406,7 @@ export const animateTransformSystem = (
             );
         }
 
-        handleAnimationLoop(entity, key, animatedTransform, progress);
+        handleAnimationLoop(entity, key, animatedTransform, progress, animatedTransform.onComplete);
     }
 };
 
@@ -455,7 +457,7 @@ export const animateMaterialSystem = (
             );
         }
 
-        handleAnimationLoop(entity, key, animatedMaterial, progress);
+        handleAnimationLoop(entity, key, animatedMaterial, progress, animatedMaterial.onComplete);
     }
 };
 
@@ -493,7 +495,7 @@ export const animateFilterSystem = (
             );
         }
 
-        handleAnimationLoop(entity, key, animatedFilter, progress);
+        handleAnimationLoop(entity, key, animatedFilter, progress, animatedFilter.onComplete);
     }
 };
 
@@ -554,6 +556,6 @@ export const animatedPostProcessingSystem = (
             );
         }
 
-        handleAnimationLoop(entity, key, animatedPostProcessing, progress);
+        handleAnimationLoop(entity, key, animatedPostProcessing, progress, animatedPostProcessing.onComplete);
     }
 };

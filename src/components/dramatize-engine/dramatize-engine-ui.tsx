@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useEffect } from 'react';
 import { useInjectRenderController } from '$/hooks';
 import type { ReactTypes } from '$/types';
 import { optimize } from '$/view';
@@ -10,9 +11,13 @@ import { DramatizeEngineController } from '$/component-controllers';
 type Props = LibTypes.FrozenDefine<FrontProps>;
 
 export const DramatizeEngine: ReactTypes.FC<Props> = optimize(props => {
-    // DramatizeEngineController is registered by the parent page (play-script-ui, play-script-opening-ui)
-    // We inject it here to provide it to Canvas and Front via RenderParentContext
     useInjectRenderController(DramatizeEngineController);
+
+    useEffect(() => {
+        let wakeLock: WakeLockSentinel | null = null;
+        navigator.wakeLock?.request('screen').then(lock => { wakeLock = lock; }).catch(() => {});
+        return () => { wakeLock?.release(); };
+    }, []);
 
     return (
         <div
@@ -26,6 +31,7 @@ export const DramatizeEngine: ReactTypes.FC<Props> = optimize(props => {
         >
             <Canvas />
             <Audios />
+            {/* Front 在最后渲染，确保 z-index 最高 */}
             <Front {...props} />
         </div>
     );

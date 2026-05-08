@@ -5,6 +5,7 @@ import { Button } from '$/uis/button/button-ui';
 import { cn } from '$/utils/cn';
 import { optimize } from '$/view';
 import type { ScriptTypes } from '$/types';
+import { ScriptRoleEditor } from '$/components/script-role-editor/script-role-editor-ui';
 import { I18nTexts } from './script-prepare-play-const';
 import { ScriptPreparePlayController } from './script-prepare-play-controller';
 
@@ -116,6 +117,13 @@ export const ScriptPreparePlayPage = optimize(() => {
         editRole: ctrl.state.editRole,
         newRole: ctrl.state.newRole,
         allowPlay: ctrl.state.allowPlay,
+        showRoleEditor: !!(ctrl.state.editRole || ctrl.state.newRole),
+        editingRole: ctrl.state.editRole ?? ctrl.state.newRole ?? null,
+        editingRoleType: (() => {
+            const info = ctrl.state.editRole ?? ctrl.state.newRole;
+            if (!info) return null;
+            return info.isNpc ? 'npc' : info.isOpen ? 'open' : 'fixed';
+        })(),
     }));
 
     // Exact port: filter out NPC roles
@@ -158,10 +166,6 @@ export const ScriptPreparePlayPage = optimize(() => {
             const visual = characterInfo!.state.currentFigure!.visual;
             const imgW = visual.width ?? 1080;
             const imgH = visual.height ?? 1920;
-            console.log('[RoleCard] name=', displayName);
-            console.log('[RoleCard] visual w/h=', imgW, imgH);
-            console.log('[RoleCard] face=', JSON.stringify(imageInfo.face));
-            console.log('[RoleCard] rect=', JSON.stringify(imageInfo.rect));
             imgStyle = calculateImageStyle(
                 CARD_VIEW_W,
                 CARD_VIEW_H,
@@ -173,7 +177,6 @@ export const ScriptPreparePlayPage = optimize(() => {
                 imageInfo.rect.top,
                 imageInfo.rect.bottom,
             );
-            console.log('[RoleCard] imgStyle=', JSON.stringify(imgStyle));
         }
 
         return (
@@ -421,7 +424,7 @@ export const ScriptPreparePlayPage = optimize(() => {
                         <Button
                             onPress={ctrl.playAsGod}
                             disabled={!state.allowPlay}
-                            kind="OffWhite"
+                            kind="White"
                             size="medium"
                             className="w-full"
                         >
@@ -430,6 +433,18 @@ export const ScriptPreparePlayPage = optimize(() => {
                     </div>
                 </div>
             </div>
+
+            {/* ScriptRoleEditor 弹层 */}
+            {state.showRoleEditor && (
+                <ScriptRoleEditor
+                    roleType={state.editingRoleType as 'fixed' | 'npc' | 'open' | null}
+                    initialInfo={state.editingRole}
+                    role={state.editingRole}
+                    roleList={state.roles ?? []}
+                    onClose={ctrl.closeRoleEditor}
+                    onConfirm={ctrl.onUpdateRole}
+                />
+            )}
         </RenderParentProvider>
     );
 });

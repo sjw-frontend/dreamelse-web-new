@@ -1,21 +1,21 @@
 // @ts-nocheck
 import { useEffect, useMemo } from 'react';
 import { DramatizeEngineController } from '$/component-controllers';
-import { useReactive, useRegisterRenderController } from '$/hooks';
-import { cn } from '$/utils/cn';
+import { useReactive, useRegisterRenderController, useZoneController } from '$/hooks';
 import { optimize } from '$/view';
 import type { ScriptTypes } from '$/types';
+import { ScriptController } from '$/controllers';
 import { DramatizeLoading } from '$/components/dramatize-loading/dramatize-loading-ui';
 import { DramatizeEngine } from '$/components/dramatize-engine/dramatize-engine-ui';
+import { DramatizePanel } from '$/components/dramatize-panel/dramatize-panel-ui';
 import { PlayScriptController } from './play-script-controller';
 
 export const PlayScriptPage = optimize(() => {
     const [ctrl, RenderParentProvider] = useRegisterRenderController(PlayScriptController);
     const [engineCtrl, EngineProvider] = useRegisterRenderController(DramatizeEngineController);
 
-    // P0 fix: inject DramatizeEngineController — this triggers #start()
+    // inject DramatizeEngineController — this triggers #start()
     useEffect(() => {
-        console.log('[PlayScript UI] useEffect: setRelatedControllers called');
         ctrl.setRelatedControllers({ dramatizeEngineCtrl: engineCtrl });
     }, []);
 
@@ -36,12 +36,20 @@ export const PlayScriptPage = optimize(() => {
         isInteractionShow: ctrl.state.isInteractionShow,
     }));
 
+    const scriptCtrl = useZoneController(ScriptController);
+
+    const loadingTextList = useReactive(() => ({
+        list: scriptCtrl.state.waitNarrativeLoadingTextList,
+    })).list;
+
     const roles = useMemo(
         () =>
             state.roles?.map((item: ScriptTypes.FrozenRoleInfo) => ({
                 name: item.state.characterInfo?.state.name ?? '',
                 avatarUri: item.state.characterInfo?.state.currentFigure?.visual?.uri ?? null,
                 title: item.state.identities[0]?.label ?? '',
+                description: item.state.backgroundDesc ?? '',
+                secret: item.state.secret ?? '',
             })),
         [state.roles],
     );
@@ -118,67 +126,25 @@ export const PlayScriptPage = optimize(() => {
                         showLottie={state.showLottie}
                         storyDesc={state.storyDesc}
                         roles={roles}
+                        loadingTextList={loadingTextList}
                     />
 
-                    {/* ── Bottom panel: speed + chapter ── */}
-                    {state.playId != null && !state.showLoadingRoles && (
-                        <div
-                            className={cn(
-                                'absolute bottom-6 left-0 right-0 z-20 flex items-center justify-between px-4',
-                                !state.isChapterDisplay && 'opacity-0 pointer-events-none',
-                            )}
-                        >
-                            <button
-                                type="button"
-                                onClick={ctrl.toggleChapterListShow}
-                                className="h-10 px-4 rounded-full text-white text-sm font-semibold flex items-center gap-2"
-                                style={{ backgroundColor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
-                            >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <line x1="3" y1="6" x2="21" y2="6" />
-                                    <line x1="3" y1="12" x2="21" y2="12" />
-                                    <line x1="3" y1="18" x2="21" y2="18" />
-                                </svg>
-                                第 {state.totalChapterCount} 章
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={ctrl.onChangeSpeed}
-                                className="h-10 px-4 rounded-full text-white text-sm font-semibold"
-                                style={{ backgroundColor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
-                            >
-                                {speedLabel}
-                            </button>
-                        </div>
-                    )}
-
-                    {/* ── Chapter list overlay ── */}
-                    {state.showChapterList && (
-                        <div
-                            className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm flex items-end"
-                            onClick={ctrl.toggleChapterListShow}
-                        >
-                            <div
-                                className="w-full bg-bg-card rounded-t-2xl p-6"
-                                onClick={e => e.stopPropagation()}
-                            >
-                                <div className="flex items-center justify-between mb-4">
-                                    <span className="text-lg font-bold text-text-primary">章节列表</span>
-                                    <button
-                                        type="button"
-                                        onClick={ctrl.toggleChapterListShow}
-                                        className="text-text-secondary hover:text-text-primary"
-                                    >
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                            <line x1="18" y1="6" x2="6" y2="18" />
-                                            <line x1="6" y1="6" x2="18" y2="18" />
-                                        </svg>
-                                    </button>
-                                </div>
-                                <p className="text-text-secondary text-sm">共 {state.totalChapterCount} 章</p>
-                            </div>
-                        </div>
+                    {/* ── DramatizePanel（速度 + 回顾 + 章节列表） ── */}
+                    {state.playId != null && (
+                        <DramatizePanel
+                            playId={state.playId}
+                            speedEnabled
+                            speed={state.speed}
+                            chapterEnabled={state.isChapterDisplay}
+                            reviewEnabled
+                            showChapterList={state.showChapterList}
+                            totalChapterCount={state.totalChapterCount}
+                            onToggleListShow={ctrl.toggleChapterListShow}
+                            onChangeSpeed={ctrl.onChangeSpeed}
+                            onSelectChapter={ctrl.selectChapter}
+                            onChapterListChange={ctrl.setChapterList}
+                            onRestart={ctrl.restart}
+                        />
                     )}
                 </div>
             </EngineProvider>

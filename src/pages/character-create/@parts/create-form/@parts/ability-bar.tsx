@@ -24,6 +24,7 @@ export const AbilityBar: ReactTypes.FC<Props> = optimize(({
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const longPressStartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isLongPressing = useRef(false);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const containerWidth = window.innerWidth - 32;
     const barWidth = percent === 0 ? MIN_WIDTH : (containerWidth - MIN_WIDTH) * percent / 100 + MIN_WIDTH;
@@ -64,7 +65,27 @@ export const AbilityBar: ReactTypes.FC<Props> = optimize(({
         stopLongPress();
     }, [id, percent, onValueChange, stopLongPress]);
 
-    useEffect(() => () => stopLongPress(), []);
+    // Pointer-based continuous increment (150ms interval)
+    const handlePointerDown = useCallback(() => {
+        if (intervalRef.current) return;
+        onLongPressStart?.();
+        intervalRef.current = setInterval(() => {
+            onValueChange(id);
+        }, 150);
+    }, [id, onValueChange, onLongPressStart]);
+
+    const handlePointerUp = useCallback(() => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+        onLongPressEnd?.();
+    }, [onLongPressEnd]);
+
+    useEffect(() => () => {
+        stopLongPress();
+        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    }, []);
 
     const gradient = `linear-gradient(to right, ${colors.start ?? '#fff'}, ${colors.transition ?? '#fff'})`;
 
@@ -83,6 +104,9 @@ export const AbilityBar: ReactTypes.FC<Props> = optimize(({
                 onMouseLeave={handleMouseUp}
                 onTouchStart={handleMouseDown}
                 onTouchEnd={handleMouseUp}
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
                 style={{
                     width: barWidth,
                     minWidth: MIN_WIDTH,

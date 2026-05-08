@@ -304,6 +304,10 @@ export class DramatizeNarrativeDomain extends BaseDomain<
         }
         element.state.isActionsExecuted = true;
 
+        // Snapshot style before any actions run, so Animation's `from` is not
+        // polluted by a same-frame SetStyle action.
+        const initialStyle = { ...element.state.style };
+
         element.actions.forEach(async (action: any) => {
             if (action.delayMS != null && action.delayMS > 0) {
                 await this.#waitActionDelay(action.delayMS);
@@ -318,6 +322,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                         action.params.style,
                         element.extraZ,
                     );
+                    action.params.fromStyle = element.state.style;
                     element.emitEvent('runVisualAnimation', action.params);
                     break;
                 }
@@ -436,6 +441,17 @@ export class DramatizeNarrativeDomain extends BaseDomain<
         try {
             const { narrative, resourceRecord } = this.props;
 
+            const rawLayout = ObjectUtils.getValue(
+                resourceRecord.layout,
+                narrative.composition?.layout,
+            );
+            console.log('[ParseLayout] rawLayout', {
+                layoutKey: narrative.composition?.layout,
+                shots: rawLayout?.layout?.shots?.map((s: any) => ({
+                    actors: s.actors?.map((a: any) => ({ motion: a.motion })),
+                })),
+            });
+
             let layout = cloneDeep(
                 ObjectUtils.getValue(
                     resourceRecord.layout,
@@ -482,6 +498,7 @@ export class DramatizeNarrativeDomain extends BaseDomain<
                         effectsLength > 0;
 
                     if (shotIndex === 0) {
+                        console.log('[ParseLayout] act.motion raw', { shotIndex, index, motion: act.motion });
                         if (!act.motion?.to && effectsLength === 0) {
                             ObjectUtils.setValue(
                                 act,
@@ -1553,6 +1570,10 @@ export class DramatizeNarrativeDomain extends BaseDomain<
         );
         if (element) {
             element.state.currentAnimationStyle = style;
+            element.state.style = ObjectUtils.mergeExcludeUndefined(
+                element.state.style,
+                style,
+            );
         }
     };
 

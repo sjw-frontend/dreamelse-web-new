@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useCallback } from 'react';
 import { useInjectRenderController, useReactive } from '$/hooks';
-import { Search } from '$/uis';
+import { Search } from '$/uis/search/search-ui';
 import { optimize } from '$/view';
 import { CharacterPickList } from '$/components/character-pick-list';
 import { CharacterCreateController } from '../../character-create-controller';

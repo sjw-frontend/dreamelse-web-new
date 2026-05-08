@@ -279,7 +279,16 @@ export class World {
             animateFilterSystem(entity, delta);
 
             // External systems for objects
-            if (!object) continue;
+            if (!object) {
+                if (entity.has(Transform.componentName)) {
+                    const t = Transform.ensureType(entity.get(Transform.componentName));
+                    if (entity.has(Animated.componentName + '<' + Transform.componentName + ':scale>') ||
+                        [...entity.keys()].some(k => k.includes('transform:scale'))) {
+                        console.warn('[World] entity has scale animation but no mesh!', id, 'scale=', t.scale);
+                    }
+                }
+                continue;
+            }
             externalMiscSystem(entity, object);
             if (id !== ROOT_CONTAINER_ID) {
                 externalParentSystem(
@@ -409,7 +418,6 @@ export class World {
         }
 
         const componentName = component.meta ?? component.constructor.name;
-
         entity.set(componentName, component);
     }
 

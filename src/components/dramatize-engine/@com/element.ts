@@ -113,6 +113,7 @@ export const createFramesElement = (
                             resource.speed ??
                             defaultSettings.speed ??
                             DefaultFramesSpeed, // 1表示60fps, 0.2 表示12fps
+                        currentAnimationStyle: undefined,
                     }),
 
                     extraZ: null,
@@ -214,6 +215,7 @@ export const createImageElement = (
                 isActionsExecuted: false,
 
                 controlShow: false,
+                currentAnimationStyle: undefined,
             }),
             actions,
 

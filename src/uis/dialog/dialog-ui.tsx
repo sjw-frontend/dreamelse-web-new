@@ -2,6 +2,15 @@ import * as RadixDialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '$/utils/cn';
 import type { ReactNode } from 'react';
+import type { ButtonKind } from '$/uis/button/button-ui';
+
+export type DialogButton = {
+    text: ReactNode;
+    lightText?: boolean;
+    disabled?: boolean;
+    kind?: ButtonKind;
+    onPress?: (index: number) => void;
+};
 
 export interface DialogProps {
     visible?: boolean;
@@ -11,8 +20,24 @@ export interface DialogProps {
     className?: string;
     showCloseIcon?: boolean;
     headerImage?: string;
+    headerImageStyle?: {
+        width: number;
+        height: number;
+        offsetY: number;
+    };
     position?: 'center' | 'bottom';
+    title?: ReactNode;
+    content?: ReactNode;
+    buttons?: DialogButton[];
+    buttonGroupKind?: 'row' | 'column';
+    pressMaskClose?: boolean;
 }
+
+const buttonKindStyle = (kind?: ButtonKind, lightText?: boolean): React.CSSProperties => {
+    if (kind === 'Danger') return { color: '#ff4444', background: 'transparent' };
+    if (kind === 'Text' || lightText) return { color: 'rgba(255,255,255,0.5)', background: 'transparent' };
+    return { backgroundColor: 'var(--color-accent, #ABFF1A)', color: '#0B1426' };
+};
 
 export const Dialog = ({
     visible,
@@ -22,13 +47,19 @@ export const Dialog = ({
     className,
     showCloseIcon,
     headerImage,
+    headerImageStyle,
     position = 'center',
+    title,
+    content,
+    buttons,
+    buttonGroupKind = 'row',
+    pressMaskClose = true,
 }: DialogProps) => {
     const isOpen = visible ?? active ?? false;
     const isBottom = position === 'bottom';
 
     return (
-        <RadixDialog.Root open={isOpen} onOpenChange={open => { if (!open) onClose?.(); }}>
+        <RadixDialog.Root open={isOpen} onOpenChange={open => { if (!open && pressMaskClose) onClose?.(); }}>
             <RadixDialog.Portal>
                 <AnimatePresence>
                     {isOpen && (
@@ -40,6 +71,7 @@ export const Dialog = ({
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     transition={{ duration: 0.2 }}
+                                    onClick={() => { if (pressMaskClose) onClose?.(); }}
                                 />
                             </RadixDialog.Overlay>
                             <RadixDialog.Content asChild>
@@ -71,10 +103,48 @@ export const Dialog = ({
                                     )}
                                     {headerImage && (
                                         <div className="flex justify-center mb-4">
-                                            <img src={headerImage} alt="" className="w-20 h-20 object-cover rounded-xl" />
+                                            <img
+                                                src={headerImage}
+                                                alt=""
+                                                style={headerImageStyle ? {
+                                                    width: headerImageStyle.width,
+                                                    height: headerImageStyle.height,
+                                                    marginTop: -headerImageStyle.offsetY,
+                                                    objectFit: 'cover',
+                                                    borderRadius: 12,
+                                                } : undefined}
+                                                className={headerImageStyle ? undefined : 'w-20 h-20 object-cover rounded-xl'}
+                                            />
                                         </div>
                                     )}
+                                    {title && (
+                                        <p className="text-text-primary font-semibold text-lg mb-2">{title}</p>
+                                    )}
+                                    {content && (
+                                        <p className="text-text-secondary text-sm mb-4">{content}</p>
+                                    )}
                                     {children}
+                                    {buttons && buttons.length > 0 && (
+                                        <div
+                                            className={cn(
+                                                'flex mt-4',
+                                                buttonGroupKind === 'column' ? 'flex-col gap-2' : 'flex-row gap-3',
+                                            )}
+                                        >
+                                            {buttons.map((btn, i) => (
+                                                <button
+                                                    key={i}
+                                                    type="button"
+                                                    disabled={btn.disabled}
+                                                    onClick={() => btn.onPress?.(i)}
+                                                    className="flex-1 h-10 rounded-xl text-sm font-medium cursor-pointer disabled:opacity-40"
+                                                    style={buttonKindStyle(btn.kind, btn.lightText)}
+                                                >
+                                                    {btn.text}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </motion.div>
                             </RadixDialog.Content>
                         </>

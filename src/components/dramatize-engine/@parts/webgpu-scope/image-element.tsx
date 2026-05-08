@@ -74,6 +74,7 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
         translate,
         isSingle,
         dry,
+        onAnimationEnd,
         onReady,
     }) => {
         const { world } = useRenderContext();
@@ -89,7 +90,17 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
             () => ({
                 breakAnimations: () => {
                     world.removeAnimationComponents(id);
-                    return {}; // TODO
+                    return {
+                        x: sprite.position.x,
+                        y: sprite.position.y,
+                        z: sprite.position.z,
+                        scale: sprite.transform.scale,
+                        rotation: sprite.transform.rotation,
+                        opacity: sprite.material.opacity,
+                        brightness: sprite.material.brightness,
+                        color: sprite.material.color,
+                        blur: sprite.filter.blur,
+                    };
                 },
                 removeSpecialEffects: () => {
                     specialEffectCleanups.current.forEach(cleanup => cleanup());
@@ -200,16 +211,41 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
                 animation.repeat === 'reverse';
 
             const loopback = animation.repeat === 'reverse';
+            const from = animation.fromStyle;
+
+            console.log('[WEB ImageElement animation]', id, {
+                scale: { from: from?.scale ?? sprite.transform.scale, to: animation.style.scale },
+                x: { from: from?.x ?? sprite.position.x, to: animation.style.x },
+                y: { from: from?.y ?? sprite.position.y, to: animation.style.y },
+                durationMS: animation.durationMS,
+                repeat: animation.repeat,
+            });
+
+            const handleComplete = () => {
+                onAnimationEnd(id, {
+                    x: sprite.position.x,
+                    y: sprite.position.y,
+                    z: sprite.position.z,
+                    scale: sprite.transform.scale,
+                    rotation: sprite.transform.rotation,
+                    opacity: sprite.material.opacity,
+                    brightness: sprite.material.brightness,
+                    color: sprite.material.color,
+                    blur: sprite.filter.blur,
+                });
+            };
 
             if (animation.style.x != null) {
                 const anim = new Animated(
                     Position,
                     'x',
-                    sprite.position.x,
+                    from?.x ?? sprite.position.x,
                     animation.style.x,
                     animation.durationMS ?? 1000,
                     loop,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -218,11 +254,13 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
                 const anim = new Animated(
                     Position,
                     'y',
-                    sprite.position.y,
+                    from?.y ?? sprite.position.y,
                     animation.style.y,
                     animation.durationMS ?? 1000,
                     loop,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -231,26 +269,29 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
                 const anim = new Animated(
                     Position,
                     'z',
-                    sprite.position.z,
+                    from?.z ?? sprite.position.z,
                     animation.style.z,
                     animation.durationMS ?? 1000,
                     loop,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
 
             if (animation.style.scale != null) {
                 const scale = animation.style.scale;
-
                 const anim = new Animated(
                     Transform,
                     'scale',
-                    sprite.transform.scale,
+                    from?.scale ?? sprite.transform.scale,
                     scale,
                     animation.durationMS ?? 1000,
                     loop,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -259,11 +300,13 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
                 const anim = new Animated(
                     Transform,
                     'rotation',
-                    sprite.transform.rotation,
+                    from?.rotation ?? sprite.transform.rotation,
                     animation.style.rotation,
                     animation.durationMS ?? 1000,
                     loop,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -272,11 +315,13 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
                 const anim = new Animated(
                     Material,
                     'opacity',
-                    sprite.material.opacity,
+                    from?.opacity ?? sprite.material.opacity,
                     animation.style.opacity,
                     animation.durationMS ?? 1000,
                     loop,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -285,11 +330,13 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
                 const anim = new Animated(
                     Material,
                     'brightness',
-                    sprite.material.brightness,
+                    from?.brightness ?? sprite.material.brightness,
                     animation.style.brightness,
                     animation.durationMS ?? 1000,
                     loop,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -298,11 +345,13 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
                 const anim = new Animated(
                     Material,
                     'color',
-                    sprite.material.color,
+                    from?.color ?? sprite.material.color,
                     animation.style.color,
                     animation.durationMS ?? 1000,
                     loop,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -311,11 +360,13 @@ export const ImageElement: ReactTypes.FC<ImageElementProps> = optimize(
                 const anim = new Animated(
                     Filter,
                     'blur',
-                    sprite.filter.blur,
+                    from?.blur ?? sprite.filter.blur,
                     animation.style.blur,
                     animation.durationMS ?? 1000,
                     loop,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }

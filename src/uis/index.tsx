@@ -3,6 +3,8 @@
 
 export { Pressable as AsyncPressable } from './primitives/pressable';
 export { Image as LockAreaImage } from './primitives/image';
+export { Dialog } from './dialog/dialog-ui';
+export type { DialogProps, DialogButton } from './dialog/dialog-ui';
 
 import type { ReactTypes } from '$/types';
 import { optimize } from '$/view';
@@ -13,11 +15,21 @@ export const KeyboardControl: ReactTypes.FCWC = optimize(({ children, style }) =
 ));
 
 // VerticalText — RN vertical text, web uses writing-mode
-export const VerticalText = optimize(({ children, style }: any) => (
-    <span style={{ ...style, writingMode: 'vertical-rl' }}>{children}</span>
+export const VerticalText = optimize(({ text, containerStyle, textStyle }: { text?: string; children?: string; containerStyle?: React.CSSProperties; textStyle?: React.CSSProperties }) => (
+    <div style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', ...containerStyle }}>
+        <span style={textStyle}>{text}</span>
+    </div>
 ));
 
-// ScrollText — scrolling marquee text
-export const ScrollText = optimize(({ children, style }: any) => (
-    <p style={style} className="text-text-primary">{children}</p>
+// ScrollText — horizontal marquee
+export const ScrollText = optimize(({ text, style }: { text?: string; children?: string; style?: React.CSSProperties }) => (
+    <div style={{ overflow: 'hidden', ...style }}>
+        <span style={{
+            display: 'inline-block', whiteSpace: 'nowrap',
+            animation: 'scroll-text 8s linear infinite',
+        }}>
+            {text}&nbsp;&nbsp;&nbsp;&nbsp;{text}
+        </span>
+        <style>{`@keyframes scroll-text { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
+    </div>
 ));

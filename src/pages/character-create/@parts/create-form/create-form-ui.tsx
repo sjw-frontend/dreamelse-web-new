@@ -11,7 +11,7 @@ import { Button } from '$/uis/button/button-ui';
 import { optimize } from '$/view';
 import { CharacterCreateController } from '../../character-create-controller';
 import { AbilityBar } from './@parts';
-import { I18nTexts } from './create-form-const';
+import { I18nTexts, Settings } from './create-form-const';
 
 export const CreateForm = optimize(() => {
     const popup = usePopup();
@@ -27,6 +27,7 @@ export const CreateForm = optimize(() => {
         sortIndex: ctrl.state.sortIndex,
         isCustom: ctrl.state.isCustom,
         waitCharacterSoulLoadingTextList: characterCtrl.state.waitCharacterSoulLoadingTextList,
+        desc: ctrl.state.newData.state.desc ?? '',
     }), { deep: true });
 
     const [scrollEnabled, setScrollEnabled] = useState(true);
@@ -117,6 +118,37 @@ export const CreateForm = optimize(() => {
                             onLongPressEnd={handleLongPressEnd}
                         />
                     ))}
+                </div>
+
+                {/* CharacterDesc */}
+                <div style={{ marginTop: 16 }}>
+                    <textarea
+                        value={reactiveState.desc}
+                        maxLength={Settings.descMaxLength}
+                        placeholder={I18nTexts.descPlaceholder}
+                        onChange={e => {
+                            characterCtrl.setCharacterState(
+                                reactiveState.newOne.id,
+                                'desc',
+                                e.target.value,
+                                false,
+                            );
+                        }}
+                        style={{
+                            width: '100%',
+                            minHeight: 80,
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: 12,
+                            padding: '10px 14px',
+                            color: '#EDEDED',
+                            fontSize: 14,
+                            lineHeight: 1.6,
+                            outline: 'none',
+                            resize: 'none',
+                            boxSizing: 'border-box',
+                        }}
+                    />
                 </div>
             </div>
 

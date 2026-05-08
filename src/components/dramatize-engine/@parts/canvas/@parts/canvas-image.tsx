@@ -88,7 +88,7 @@ export const CanvasImage: ReactTypes.FC<Props> = optimize(({ id }) => {
             ref.current?.removeSpecialEffects();
         });
 
-        element?.addEventListener('runVisualAnimation', (animation: any) =>
+        element?.addEventListener('runVisualAnimation', (animation: any) => {
             setElementProps(
                 (prevState: any) =>
                     prevState &&
@@ -96,7 +96,8 @@ export const CanvasImage: ReactTypes.FC<Props> = optimize(({ id }) => {
                         ...prevState,
                         animation,
                     } satisfies ElementProps),
-            ));
+            );
+        });
 
         element?.addEventListener('runVisualSpecialEffect', (specialEffect: any) =>
             setElementProps(

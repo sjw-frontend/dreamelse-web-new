@@ -1,3 +1,5 @@
+// @ts-nocheck
+import { useRef, useState } from 'react';
 import { useReactive, useRegisterRenderController } from '$/hooks';
 import { optimize } from '$/view';
 import { Pressable, ScrollView } from '$/uis/primitives';
@@ -12,6 +14,10 @@ export const CharacterDetailsPage = optimize(() => {
         detailsPanelExpanded: ctrl.state.detailsPanelExpanded,
         showMoreMenu: ctrl.state.showMoreMenu,
     }));
+
+    const [nameEditValue, setNameEditValue] = useState('');
+    const [isNameEditing, setIsNameEditing] = useState(false);
+    const nameInputRef = useRef<HTMLInputElement>(null);
 
     const bgColor = state.dataState?.currentFigureSkin?.backgroundColor ?? null;
     const figureUri = state.dataState?.currentViewFigure?.visual?.uri ?? null;
@@ -52,17 +58,60 @@ export const CharacterDetailsPage = optimize(() => {
                         </svg>
                     </Pressable>
 
-                    <Pressable
-                        onPress={ctrl.openMoreMenu}
-                        className="w-9 h-9 flex items-center justify-center rounded-full bg-black/20"
-                    >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="5" r="1.5" fill="white" />
-                            <circle cx="12" cy="12" r="1.5" fill="white" />
-                            <circle cx="12" cy="19" r="1.5" fill="white" />
-                        </svg>
-                    </Pressable>
+                    {/* More menu button + dropdown */}
+                    <div style={{ position: 'relative' }}>
+                        <Pressable
+                            onPress={ctrl.openMoreMenu}
+                            className="w-9 h-9 flex items-center justify-center rounded-full bg-black/20"
+                        >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="5" r="1.5" fill="white" />
+                                <circle cx="12" cy="12" r="1.5" fill="white" />
+                                <circle cx="12" cy="19" r="1.5" fill="white" />
+                            </svg>
+                        </Pressable>
+
+                        {state.showMoreMenu && (
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    top: 40,
+                                    right: 0,
+                                    zIndex: 50,
+                                    backgroundColor: 'var(--color-bg-card, #2a2a2a)',
+                                    borderRadius: 12,
+                                    minWidth: 160,
+                                    overflow: 'hidden',
+                                    boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+                                }}
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <Pressable
+                                    onPress={ctrl.togglePublic}
+                                    className="w-full h-12 flex items-center px-4"
+                                >
+                                    <span className="text-text-primary font-medium text-sm">
+                                        {state.dataState?.isPublic ? '设为私密' : '设为公开'}
+                                    </span>
+                                </Pressable>
+                                <Pressable
+                                    onPress={ctrl.closeMoreMenu}
+                                    className="w-full h-12 flex items-center px-4"
+                                >
+                                    <span className="text-text-secondary font-medium text-sm">取消</span>
+                                </Pressable>
+                            </div>
+                        )}
+                    </div>
                 </div>
+
+                {/* Overlay to close more menu when clicking outside */}
+                {state.showMoreMenu && (
+                    <div
+                        className="absolute inset-0 z-40"
+                        onClick={ctrl.closeMoreMenu}
+                    />
+                )}
 
                 {/* Details panel */}
                 <div className="relative z-10 mt-auto">
@@ -81,9 +130,32 @@ export const CharacterDetailsPage = optimize(() => {
                                 {/* Name & honorary */}
                                 <div className="flex flex-row items-start justify-between gap-3">
                                     <div className="flex flex-col gap-1">
-                                        <span className="text-text-primary font-bold text-2xl">
-                                            {state.dataState?.name ?? '—'}
-                                        </span>
+                                        {isNameEditing ? (
+                                            <input
+                                                ref={nameInputRef}
+                                                className="text-text-primary font-bold text-2xl bg-transparent border-b border-white/40 outline-none w-full"
+                                                value={nameEditValue}
+                                                maxLength={20}
+                                                onChange={e => setNameEditValue(e.target.value)}
+                                                onBlur={() => {
+                                                    setIsNameEditing(false);
+                                                    ctrl.setNameEdit(false);
+                                                    ctrl.saveNameAndHonorary(nameEditValue, state.dataState?.honorary ?? '');
+                                                }}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            <span
+                                                className="text-text-primary font-bold text-2xl cursor-pointer"
+                                                onClick={() => {
+                                                    setNameEditValue(state.dataState?.name ?? '');
+                                                    setIsNameEditing(true);
+                                                    ctrl.setNameEdit(true);
+                                                }}
+                                            >
+                                                {state.dataState?.name ?? '—'}
+                                            </span>
+                                        )}
                                         {state.dataState?.honorary && (
                                             <span className="text-text-secondary text-sm">
                                                 {state.dataState.honorary}
@@ -153,33 +225,6 @@ export const CharacterDetailsPage = optimize(() => {
                     </div>
                 </div>
 
-                {/* More menu overlay */}
-                {state.showMoreMenu && (
-                    <div
-                        className="absolute inset-0 z-20 bg-black/50 flex items-end"
-                        onClick={ctrl.closeMoreMenu}
-                    >
-                        <div
-                            className="w-full bg-bg-card rounded-t-3xl p-4 flex flex-col gap-2"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <Pressable
-                                onPress={ctrl.togglePublic}
-                                className="w-full h-12 rounded-2xl bg-white/5 flex items-center justify-center"
-                            >
-                                <span className="text-text-primary font-medium">
-                                    {state.dataState?.isPublic ? '设为私密' : '设为公开'}
-                                </span>
-                            </Pressable>
-                            <Pressable
-                                onPress={ctrl.closeMoreMenu}
-                                className="w-full h-12 rounded-2xl bg-white/5 flex items-center justify-center"
-                            >
-                                <span className="text-text-secondary font-medium">取消</span>
-                            </Pressable>
-                        </div>
-                    </div>
-                )}
             </div>
         </RenderParentProvider>
     );

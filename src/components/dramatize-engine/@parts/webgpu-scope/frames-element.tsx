@@ -84,6 +84,7 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
         anchor,
         isSingle,
         dry,
+        onAnimationEnd,
         onReady,
     }) => {
         const interval = useMemo(
@@ -104,8 +105,17 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
             () => ({
                 breakAnimations: () => {
                     world.removeAnimationComponents(id);
-
-                    return {}; // TODO
+                    return {
+                        x: frameSeq.position.x,
+                        y: frameSeq.position.y,
+                        z: frameSeq.position.z,
+                        scale: frameSeq.transform.scale,
+                        rotation: frameSeq.transform.rotation,
+                        opacity: frameSeq.material.opacity,
+                        brightness: frameSeq.material.brightness,
+                        color: frameSeq.material.color,
+                        blur: frameSeq.filter.blur,
+                    };
                 },
                 removeSpecialEffects: () => {
                     specialEffectCleanups.current.forEach(cleanup => cleanup());
@@ -232,16 +242,33 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
                 animation.repeat === 'reverse';
 
             const loopback = animation.repeat === 'reverse';
+            const from = animation.fromStyle;
+
+            const handleComplete = () => {
+                onAnimationEnd(id, {
+                    x: frameSeq.position.x,
+                    y: frameSeq.position.y,
+                    z: frameSeq.position.z,
+                    scale: frameSeq.transform.scale,
+                    rotation: frameSeq.transform.rotation,
+                    opacity: frameSeq.material.opacity,
+                    brightness: frameSeq.material.brightness,
+                    color: frameSeq.material.color,
+                    blur: frameSeq.filter.blur,
+                });
+            };
 
             if (animation.style.x != null) {
                 const anim = new Animated(
                     Position,
                     'x',
-                    frameSeq.position.x,
+                    from?.x ?? frameSeq.position.x,
                     animation.style.x,
                     animation.durationMS ?? 1000,
                     repeat,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -250,11 +277,13 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
                 const anim = new Animated(
                     Position,
                     'y',
-                    frameSeq.position.y,
+                    from?.y ?? frameSeq.position.y,
                     animation.style.y,
                     animation.durationMS ?? 1000,
                     repeat,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -263,11 +292,13 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
                 const anim = new Animated(
                     Position,
                     'z',
-                    frameSeq.position.z,
+                    from?.z ?? frameSeq.position.z,
                     animation.style.z,
                     animation.durationMS ?? 1000,
                     repeat,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -278,11 +309,13 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
                 const anim = new Animated(
                     Transform,
                     'scale',
-                    frameSeq.transform.scale,
+                    from?.scale ?? frameSeq.transform.scale,
                     scale,
                     animation.durationMS ?? 1000,
                     repeat,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -291,11 +324,13 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
                 const anim = new Animated(
                     Transform,
                     'rotation',
-                    frameSeq.transform.rotation,
+                    from?.rotation ?? frameSeq.transform.rotation,
                     animation.style.rotation,
                     animation.durationMS ?? 1000,
                     repeat,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -304,11 +339,13 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
                 const anim = new Animated(
                     Material,
                     'opacity',
-                    frameSeq.material.opacity,
+                    from?.opacity ?? frameSeq.material.opacity,
                     animation.style.opacity,
                     animation.durationMS ?? 1000,
                     repeat,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -317,11 +354,13 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
                 const anim = new Animated(
                     Material,
                     'brightness',
-                    frameSeq.material.brightness,
+                    from?.brightness ?? frameSeq.material.brightness,
                     animation.style.brightness,
                     animation.durationMS ?? 1000,
                     repeat,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -330,11 +369,13 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
                 const anim = new Animated(
                     Material,
                     'color',
-                    frameSeq.material.color,
+                    from?.color ?? frameSeq.material.color,
                     animation.style.color,
                     animation.durationMS ?? 1000,
                     repeat,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }
@@ -343,11 +384,13 @@ export const FramesElement: ReactTypes.FC<FramesElementProps> = optimize(
                 const anim = new Animated(
                     Filter,
                     'blur',
-                    frameSeq.filter.blur,
+                    from?.blur ?? frameSeq.filter.blur,
                     animation.style.blur,
                     animation.durationMS ?? 1000,
                     repeat,
                     loopback,
+                    undefined,
+                    handleComplete,
                 );
                 world.registerComponent(id, anim);
             }

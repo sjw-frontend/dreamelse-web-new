@@ -21,7 +21,13 @@ export const LayoutRoot: ReactTypes.FCWC = optimize(({ children }) => {
             <div className="flex flex-col h-full relative">
                 <ScreenView>{children}</ScreenView>
             </div>
-            <Popup {...popup.state} />
+            <Popup
+                {...popup.state}
+                onCloseSingleInputDialog={popup.helper.closeSingleInputDialog}
+                onCloseDualInputDialog={popup.helper.closeDualInputDialog}
+                onCloseMultilineInputDialog={popup.helper.closeMultilineInputDialog}
+                onCloseImageViewer={popup.helper.closeImageViewer}
+            />
             <Navbar />
         </PopupHelperContext>
     );
