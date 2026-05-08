@@ -182,14 +182,14 @@ export const MePage: ReactTypes.FC = withAuth(optimize(() => {
                 </div>
 
                 {/* Content area — all three lists rendered, visibility toggled */}
-                <div className="flex-1 overflow-hidden">
-                    <div style={{ display: state.isPlay ? undefined : 'none', height: '100%' }}>
+                <div className="flex-1 overflow-hidden min-h-0">
+                    <div style={{ display: state.isPlay ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
                         <PlayList ctrl={ctrl} />
                     </div>
-                    <div style={{ display: state.isCreate ? undefined : 'none', height: '100%' }}>
+                    <div style={{ display: state.isCreate ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
                         <CreateList ctrl={ctrl} />
                     </div>
-                    <div style={{ display: state.isCollect ? undefined : 'none', height: '100%' }}>
+                    <div style={{ display: state.isCollect ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
                         <CollectList ctrl={ctrl} />
                     </div>
                 </div>

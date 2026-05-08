@@ -316,7 +316,7 @@ export const WorldLineList = optimize(({
     }
 
     return (
-        <div style={{ width: '100%', overflowY: 'auto', paddingBottom: 8 }}>
+        <div style={{ width: '100%', flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 8 }}>
             {ids.map(id => (
                 <WorldLineCard key={id} id={id} onPressItem={onPressItem} />
             ))}
