@@ -28,10 +28,34 @@ const getNavState = () => {
     const name = pathToRouteName(location.pathname);
     if (!name) return null;
     const currentMatch = matches.at(-1);
+    const rawPathParams = (currentMatch?.params ?? {}) as Record<string, string>;
+
+    // Convert TanStack path params (e.g. { characterId, scriptId }) → { ids: [...] }
+    // so controllers can read via route.params.ids[0]
+    const ID_PARAM_KEYS = ['characterId', 'scriptId', 'playId', 'worldLineId', 'timbreId'];
+    const ids: string[] = [];
+    for (const key of ID_PARAM_KEYS) {
+        if (rawPathParams[key] != null) {
+            ids.push(rawPathParams[key]);
+        }
+    }
+
+    // Also parse ids from search params (set during navigation)
+    const searchIds = location.search?.ids;
+    const parsedSearchIds: string[] = searchIds
+        ? (() => { try { return JSON.parse(searchIds); } catch { return []; } })()
+        : [];
+
+    const mergedIds = ids.length > 0 ? ids : parsedSearchIds;
+
+    const params: RouterTypes.RouteParams = mergedIds.length > 0
+        ? { ids: mergedIds }
+        : undefined;
+
     const route = {
         name,
         key: currentMatch?.id ?? name,
-        params: (currentMatch?.params ?? {}) as RouterTypes.RouteParams,
+        params,
     };
     return {
         routes: [route],

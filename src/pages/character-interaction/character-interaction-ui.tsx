@@ -1,19 +1,20 @@
 // @ts-nocheck
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useReactive, useRegisterRenderController, useZoneController } from '$/hooks';
-import { Pressable, TextInput } from '$/uis/primitives';
+import { Pressable } from '$/uis/primitives';
 import { ExpandablePanel } from '$/uis/expandable-panel';
 import { optimize } from '$/view';
 import { CharacterController } from '$/controllers';
 import { CharacterEnums } from '$/enums';
 import { cn } from '$/utils/cn';
 import { CharacterInteractionController } from './character-interaction-controller';
+import { ChatInput } from './@parts/chat-input/chat-input-ui';
 
 // ── Sending status indicators ─────────────────────────────────────────────────
 
 const SendingSpinner = () => (
     <div
-        className="w-4 h-4 rounded-full border-2 border-white/40 shrink-0 animate-spin"
+        className="w-5 h-5 rounded-full border-2 border-black/20 shrink-0 animate-spin"
         style={{ borderTopColor: 'transparent' }}
     />
 );
@@ -84,20 +85,21 @@ const VoiceMessageBubble = optimize(({ id, fromMe }: { id: string; fromMe: boole
     const handleToggle = useCallback(() => {
         const el = audioRef.current;
         if (!el) return;
-        if (playing) {
-            el.pause();
-        } else {
-            el.play();
-        }
+        if (playing) { el.pause(); } else { el.play(); }
     }, [playing]);
 
     return (
         <div
             className={cn(
-                'flex flex-row items-center gap-2 px-3 py-2 rounded-2xl cursor-pointer select-none',
-                fromMe ? 'bg-accent rounded-br-sm' : 'bg-white/10 rounded-bl-sm',
+                'flex flex-row items-center gap-2 px-4 py-2.5 rounded-3xl cursor-pointer select-none',
+                fromMe
+                    ? 'rounded-br-sm'
+                    : 'bg-white/90 border border-black/[0.06] rounded-bl-sm',
             )}
-            style={{ width: bubbleWidth }}
+            style={{
+                width: bubbleWidth,
+                background: fromMe ? 'linear-gradient(135deg, #C7FF5F 0%, #D0FFB5 100%)' : undefined,
+            }}
             onClick={handleToggle}
         >
             {state.audio?.source && (
@@ -110,17 +112,17 @@ const VoiceMessageBubble = optimize(({ id, fromMe }: { id: string; fromMe: boole
                 />
             )}
             {playing ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className={fromMe ? 'text-bg-page' : 'text-text-primary'}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className={fromMe ? 'text-black/80' : 'text-[#575757]'}>
                     <rect x="6" y="4" width="4" height="16" rx="1" />
                     <rect x="14" y="4" width="4" height="16" rx="1" />
                 </svg>
             ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={fromMe ? 'text-bg-page' : 'text-text-primary'}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={fromMe ? 'text-black/80' : 'text-[#575757]'}>
                     <rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" strokeWidth="1.5" />
                     <path d="M5 10a7 7 0 0014 0M12 19v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
             )}
-            <span className={cn('text-sm', fromMe ? 'text-bg-page' : 'text-text-primary')}>
+            <span className={cn('text-sm font-medium', fromMe ? 'text-black/80' : 'text-[#575757]')}>
                 {durationMS ? `${Math.round(durationMS / 1000)}″` : '语音'}
             </span>
         </div>
@@ -129,9 +131,8 @@ const VoiceMessageBubble = optimize(({ id, fromMe }: { id: string; fromMe: boole
 
 // ── Message item ──────────────────────────────────────────────────────────────
 
-const MessageItem = optimize(({ id }: { id: string }) => {
+const MessageItem = optimize(({ id, ctrl }: { id: string; ctrl: InstanceType<typeof CharacterInteractionController> }) => {
     const characterCtrl = useZoneController(CharacterController);
-    const ctrl = useZoneController(CharacterInteractionController);
     const info = characterCtrl.getMessage(id);
 
     const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
@@ -139,13 +140,10 @@ const MessageItem = optimize(({ id }: { id: string }) => {
 
     if (!info) return null;
 
-    const { state, attrs } = info;
-    const fromMe = attrs.fromMe;
-    const kind = attrs.kind;
+    const { state, fromMe, kind, isLocal } = info;
 
-    // ── Long-press / context-menu logic ──────────────────────────────────────
     const canCopy = kind === CharacterEnums.MessageItemKind.Msg;
-    const canRollback = state.isSuccess && !attrs.isLocal &&
+    const canRollback = state.isSuccess && !isLocal &&
         kind !== CharacterEnums.MessageItemKind.SysMsg;
 
     const menuOptions: MenuOption[] = [
@@ -193,7 +191,6 @@ const MessageItem = optimize(({ id }: { id: string }) => {
         onPointerCancel: handlePointerUp,
     };
 
-    // ── Sending status ────────────────────────────────────────────────────────
     const isSending = state.isSending;
     const isError = state.isError;
 
@@ -203,16 +200,18 @@ const MessageItem = optimize(({ id }: { id: string }) => {
         null
     );
 
+    // ── System message ────────────────────────────────────────────────────────
     if (kind === CharacterEnums.MessageItemKind.SysMsg) {
         return (
             <div className="flex justify-center py-1">
-                <span className="text-xs text-text-tertiary bg-white/5 rounded-full px-3 py-1">
+                <span className="text-xs text-text-tertiary bg-white/10 backdrop-blur-sm rounded-full px-3 py-1">
                     {state.content}
                 </span>
             </div>
         );
     }
 
+    // ── Plot event ────────────────────────────────────────────────────────────
     if (kind === CharacterEnums.MessageItemKind.PlotEvent && state.invitation) {
         return (
             <div className="flex justify-center py-2">
@@ -224,6 +223,7 @@ const MessageItem = optimize(({ id }: { id: string }) => {
         );
     }
 
+    // ── Voice message ─────────────────────────────────────────────────────────
     if (kind === CharacterEnums.MessageItemKind.Voice && state.audio) {
         return (
             <>
@@ -236,7 +236,6 @@ const MessageItem = optimize(({ id }: { id: string }) => {
                     />
                 )}
                 <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
-                    {!fromMe && <CharacterAvatar info={info} />}
                     <div {...bubbleProps}>
                         <VoiceMessageBubble id={id} fromMe={fromMe} />
                     </div>
@@ -246,6 +245,7 @@ const MessageItem = optimize(({ id }: { id: string }) => {
         );
     }
 
+    // ── Image message ─────────────────────────────────────────────────────────
     if (kind === CharacterEnums.MessageItemKind.Image && state.image) {
         return (
             <>
@@ -258,11 +258,10 @@ const MessageItem = optimize(({ id }: { id: string }) => {
                     />
                 )}
                 <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
-                    {!fromMe && <CharacterAvatar info={info} />}
                     <img
                         src={state.image.uri}
                         alt="image"
-                        className="max-w-[60%] rounded-2xl object-cover"
+                        className="max-w-[60%] rounded-3xl object-cover"
                         style={{ maxHeight: 200 }}
                         {...bubbleProps}
                     />
@@ -272,7 +271,7 @@ const MessageItem = optimize(({ id }: { id: string }) => {
         );
     }
 
-    // Default: text message
+    // ── Text message ──────────────────────────────────────────────────────────
     return (
         <>
             {menu && (
@@ -284,39 +283,24 @@ const MessageItem = optimize(({ id }: { id: string }) => {
                 />
             )}
             <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
-                {!fromMe && <CharacterAvatar info={info} />}
                 <div
                     className={cn(
-                        'px-3 py-2 rounded-2xl max-w-[75%]',
-                        fromMe ? 'bg-accent rounded-br-sm' : 'bg-white/10 rounded-bl-sm',
+                        'px-4 py-2.5 rounded-3xl max-w-[75%]',
+                        fromMe
+                            ? 'rounded-br-sm'
+                            : 'bg-white/90 border border-black/[0.06] rounded-bl-sm',
                         isSending && 'opacity-60',
                     )}
+                    style={fromMe ? { background: 'linear-gradient(135deg, #C7FF5F 0%, #D0FFB5 100%)' } : undefined}
                     {...bubbleProps}
                 >
-                    <span className={cn('text-sm leading-relaxed', fromMe ? 'text-bg-page' : 'text-text-primary')}>
+                    <span className={cn('text-base font-medium leading-relaxed', fromMe ? 'text-black/90' : 'text-[#575757]')}>
                         {state.content}
                     </span>
                 </div>
                 {statusIndicator}
             </div>
         </>
-    );
-});
-
-const CharacterAvatar = optimize(({ info }: { info: any }) => {
-    const avatarUri = info?.attrs?.characterInfo?.avatarUri ?? null;
-    return (
-        <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden shrink-0">
-            {avatarUri
-                ? <img src={avatarUri} alt="" className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white/60">
-                        <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
-                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                </div>
-            }
-        </div>
     );
 });
 
@@ -327,19 +311,20 @@ const PanelHeader = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInt
         dataState: ctrl.state.data?.state,
     }));
 
-    const figureVisual = state.dataState?.behavior?.currentFigureVisual?.uri ?? null;
+    const avatarUri = state.dataState?.behavior?.currentFigureVisual?.uri ?? null;
     const characterName = state.dataState?.name ?? '';
     const status = state.dataState?.behavior?.status ?? '';
     const location = state.dataState?.behavior?.location ?? '';
 
     return (
-        <div className="flex flex-row items-center gap-3 px-4 py-3">
+        <div className="flex flex-row items-center gap-2 px-6 pb-2">
+            {/* 24×24 avatar */}
             <Pressable onPress={ctrl.toDetails}>
-                <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
-                    {figureVisual
-                        ? <img src={figureVisual} alt={characterName} className="w-full h-full object-cover" />
+                <div className="w-6 h-6 rounded-full bg-white/20 overflow-hidden shrink-0 border-2 border-bg-card">
+                    {avatarUri
+                        ? <img src={avatarUri} alt={characterName} className="w-full h-full object-cover" />
                         : <div className="w-full h-full flex items-center justify-center">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-white/60">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white/60">
                                 <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
                                 <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                             </svg>
@@ -347,65 +332,31 @@ const PanelHeader = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInt
                     }
                 </div>
             </Pressable>
+
             <div className="flex flex-col">
-                <span className="text-white font-semibold text-base">{characterName}</span>
+                <span className="text-2xl font-semibold text-text-primary leading-tight">{characterName}</span>
                 {(status || location) && (
-                    <span className="text-white/60 text-xs">{[status, location].filter(Boolean).join(' · ')}</span>
+                    <div className="flex flex-row items-center gap-1 mt-0.5">
+                        {status && (
+                            <span
+                                className="text-xs font-medium text-text-primary px-3 py-1 rounded-full"
+                                style={{ background: 'rgba(255,255,255,0.4)' }}
+                            >
+                                {status}
+                            </span>
+                        )}
+                        {location && (
+                            <div className="flex flex-row items-center gap-1">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-text-primary shrink-0">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="1.5" />
+                                    <circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+                                </svg>
+                                <span className="text-xs font-semibold text-text-primary">{location}</span>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
-        </div>
-    );
-});
-
-// ── Chat input footer ─────────────────────────────────────────────────────────
-
-const ChatInputFooter = optimize(({ ctrl, expanded }: {
-    ctrl: InstanceType<typeof CharacterInteractionController>;
-    expanded: boolean;
-}) => {
-    const [inputText, setInputText] = useState('');
-    const state = useReactive(() => ({ chatEnabled: ctrl.state.chatEnabled }));
-
-    const handleSend = useCallback(() => {
-        const text = inputText.trim();
-        if (!text) return;
-        ctrl.sendMessage(text);
-        setInputText('');
-    }, [inputText, ctrl]);
-
-    return (
-        <div className={cn(
-            'flex flex-row items-center gap-2 px-4 py-3',
-            expanded ? 'border-t border-white/5 bg-bg-page/90' : 'bg-white/12 backdrop-blur-md',
-        )}>
-            <div className="flex-1 flex flex-row items-center bg-white/8 rounded-2xl px-3 h-10 border border-white/10">
-                <TextInput
-                    className="flex-1 bg-transparent text-white text-sm outline-none placeholder:text-white/50"
-                    placeholder="说点什么..."
-                    value={inputText}
-                    onChangeText={setInputText}
-                    onSubmitEditing={handleSend}
-                    editable={state.chatEnabled}
-                />
-            </div>
-            <Pressable
-                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0"
-                disabled={!state.chatEnabled}
-            >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-white">
-                    <rect x="4" y="1" width="5" height="9" rx="2.5" stroke="currentColor" strokeWidth="1.3" />
-                    <path d="M2 8a5 5 0 0010 0M6.5 13v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                </svg>
-            </Pressable>
-            <Pressable
-                onPress={handleSend}
-                disabled={!state.chatEnabled || !inputText.trim()}
-                className="w-10 h-10 rounded-full bg-accent flex items-center justify-center shrink-0 disabled:opacity-40"
-            >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M2 9l14-7-7 14V9H2z" fill="black" />
-                </svg>
-            </Pressable>
         </div>
     );
 });
@@ -416,34 +367,11 @@ const MessageList = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInt
     const scrollRef = useRef<HTMLDivElement>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
     const prevLengthRef = useRef(0);
-    const [listHeight, setListHeight] = useState<number>(() =>
-        window.visualViewport?.height ?? window.innerHeight,
-    );
 
     const state = useReactive(() => ({
         msgIds: ctrl.state.msgIds,
         showLoading: ctrl.state.showLoading,
     }));
-
-    // ── visualViewport keyboard adaptation ───────────────────────────────────
-    useEffect(() => {
-        const vv = window.visualViewport;
-        const update = () => {
-            setListHeight(vv ? vv.height : window.innerHeight);
-        };
-        if (vv) {
-            vv.addEventListener('resize', update);
-        } else {
-            window.addEventListener('resize', update);
-        }
-        return () => {
-            if (vv) {
-                vv.removeEventListener('resize', update);
-            } else {
-                window.removeEventListener('resize', update);
-            }
-        };
-    }, []);
 
     // ── Initial scroll to bottom ──────────────────────────────────────────────
     useEffect(() => {
@@ -459,7 +387,6 @@ const MessageList = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInt
         if (!el) return;
         const currentLength = state.msgIds.length;
         if (currentLength > prevLengthRef.current) {
-            // Only auto-scroll if we were already near the bottom
             const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
             if (distFromBottom < 120) {
                 el.scrollTop = el.scrollHeight;
@@ -487,10 +414,12 @@ const MessageList = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInt
     return (
         <div
             ref={scrollRef}
-            className="flex flex-col-reverse gap-3 px-4 pt-4 pb-2 overflow-y-auto flex-1"
-            style={{ maxHeight: listHeight }}
+            className="flex flex-col gap-3 px-4 pt-4 pb-2 overflow-y-auto h-full"
         >
-            {/* Loading indicator at bottom of reversed list = visual top */}
+            {/* Sentinel at top triggers history load */}
+            <div ref={sentinelRef} className="h-1 shrink-0" />
+
+            {/* Loading indicator */}
             {state.showLoading && (
                 <div className="flex items-center gap-1 pl-2 py-1">
                     {[0, 150, 300].map(delay => (
@@ -502,12 +431,11 @@ const MessageList = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInt
                     ))}
                 </div>
             )}
-            {/* Messages in reverse order so newest is at visual bottom */}
-            {[...state.msgIds].reverse().map((id: string) => (
-                <MessageItem key={id} id={id} />
+
+            {/* Messages oldest→newest, newest at bottom */}
+            {[...state.msgIds].map((id: string) => (
+                <MessageItem key={id} id={id} ctrl={ctrl} />
             ))}
-            {/* Sentinel at the top (visual) triggers history load */}
-            <div ref={sentinelRef} className="h-1 shrink-0" />
         </div>
     );
 });
@@ -547,7 +475,7 @@ export const CharacterInteractionPage = optimize(() => {
                             }}
                         />
                     }
-                    <div className="absolute inset-0 bg-black/30" />
+                    <div className="absolute inset-0 bg-black/20" />
                 </div>
 
                 {/* Character figure */}
@@ -591,7 +519,7 @@ export const CharacterInteractionPage = optimize(() => {
                         onToggle={handleToggle}
                         backgroundBlur={16}
                         header={<PanelHeader ctrl={ctrl} />}
-                        footer={<ChatInputFooter ctrl={ctrl} expanded={state.chatExpanded} />}
+                        footer={<ChatInput ctrl={ctrl} expanded={state.chatExpanded} />}
                     >
                         <MessageList ctrl={ctrl} />
                     </ExpandablePanel>

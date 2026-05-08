@@ -106,6 +106,23 @@ export const router = createRouter({ routeTree });
 // Register router instance for RouterService
 setRouterInstance(router);
 
+// On page refresh or cold start, redirect to Splash (/) so the normal boot flow runs.
+// Detect via performance.getEntriesByType: 'reload' = F5, 'navigate' from non-app = cold start.
+const shouldRedirectToSplash = (() => {
+    if (window.location.pathname === '/') return false;
+    try {
+        const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+        if (nav?.type === 'reload') return true;
+        // Cold start: navigated directly to a deep URL (not via SPA push)
+        if (nav?.type === 'navigate' && !document.referrer.startsWith(window.location.origin)) return true;
+    } catch { /* ignore */ }
+    return false;
+})();
+
+if (shouldRedirectToSplash) {
+    void router.navigate({ to: '/', replace: true });
+}
+
 declare module '@tanstack/react-router' {
     interface Register {
         router: typeof router;
