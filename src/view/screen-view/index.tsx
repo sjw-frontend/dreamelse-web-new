@@ -39,8 +39,6 @@ const useWebRoute = () => {
         ...(value !== undefined ? { value } : {}),
     };
 
-    console.log('[useWebRoute]', { name, pathname: state.location.pathname, search: state.location.search, params });
-
     return { name, key: match.id, params };
 };
 

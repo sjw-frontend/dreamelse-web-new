@@ -80,6 +80,17 @@ export class AppService extends BaseService<EventMap> {
                 userInfo,
                 token: tokenInfo.token,
             };
+        } else {
+            // userInfo 或 token 其中一个缺失/不匹配，清除两者保持一致
+            if (userInfo == null && tokenInfo != null) {
+                await this.#secureStoreService.remove(
+                    this.#secureStoreService.Keys.LoggedInUserToken,
+                );
+            } else if (tokenInfo == null && userInfo != null) {
+                await this.#storeService.remove(
+                    this.#storeService.Keys.LoggedInUser,
+                );
+            }
         }
     }
 
