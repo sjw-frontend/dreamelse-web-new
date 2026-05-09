@@ -80,7 +80,8 @@ export const CharacterEditor: ReactTypes.FC<Props> = optimize(
                 await popup.openDialogConfirm({
                     title: I18nTexts.confirmExitTitle,
                     content: I18nTexts.confirmExitContent,
-                    okButton: I18nTexts.confirmExitOkButton,
+                    // 对齐 app：okButton 用 Text kind，两个按钮并排文字样式
+                    okButton: { text: I18nTexts.confirmExitOkButton, kind: 2 },
                 })
             ) {
                 ctrl.back();
@@ -99,19 +100,23 @@ export const CharacterEditor: ReactTypes.FC<Props> = optimize(
                     width: '100%',
                     height: '100%',
                     position: 'relative',
-                    overflow: 'hidden',
+                    overflowX: 'clip',
                 }}>
                     {/* 头像背景层：绝对定位，全屏，对齐 app avatarContainer */}
-                    <div style={{
-                        position: 'absolute',
-                        top: 0, left: 0,
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        zIndex: 0,
-                    }}>
+                    <div
+                        style={{
+                            position: 'absolute',
+                            top: 0, left: 0,
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 0,
+                            cursor: allowGenerateFigure ? 'pointer' : 'default',
+                        }}
+                        onClick={allowGenerateFigure ? ctrl.openGenerateImage : undefined}
+                    >
                         <GradientBackground colors={[avatarBgColor, 'rgba(0,0,0,0)']} />
                         {reactiveState.dataState.currentViewFigure?.visual ? (
                             <img
@@ -147,7 +152,6 @@ export const CharacterEditor: ReactTypes.FC<Props> = optimize(
                             position: 'absolute',
                             right: 5,
                             top: 48,
-                            zIndex: 10,
                         }}>
                             <CharacterFiguresPanel data={reactiveState.data} />
                         </div>
@@ -161,10 +165,9 @@ export const CharacterEditor: ReactTypes.FC<Props> = optimize(
                         display: 'flex',
                         flexDirection: 'column',
                         position: 'relative',
-                        zIndex: 2,
                     }}>
                         {/* 锁定/作者按钮：对齐 app lockButton: absolute right 16 */}
-                        <div style={{ position: 'absolute', right: 16, top: 0, zIndex: 10 }}>
+                        <div style={{ position: 'absolute', right: 16, top: 0 }}>
                             {reactiveState.writable ? (
                                 <button
                                     type="button"
@@ -258,10 +261,8 @@ export const CharacterEditor: ReactTypes.FC<Props> = optimize(
                         </div>
 
                         {/* 点击头像区触发 GenerateImage：对齐 app openGenerateImageView flex 1 */}
-                        <div
-                            style={{ flex: 1, cursor: allowGenerateFigure ? 'pointer' : 'default' }}
-                            onClick={allowGenerateFigure ? ctrl.openGenerateImage : undefined}
-                        />
+                        {/* pointerEvents none 防止拦截弹框点击，点击事件由背景层的头像区承接 */}
+                        <div style={{ flex: 1, pointerEvents: 'none' }} />
 
                         {/* 底部区域：对齐 app bottom */}
                         <div style={{ paddingBottom: 16 }}>
