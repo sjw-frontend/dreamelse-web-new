@@ -82,7 +82,8 @@ export const CharacterPickList: ReactTypes.FC<CharacterPickListProps> = optimize
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(3, 114px)',
-                    gap: 8,
+                    columnGap: Math.max(0, (window.innerWidth - 32 - 114 * 3) / 2),
+                    rowGap: 0,
                     justifyContent: 'space-between',
                 }}>
                     {renderData.map(item => {
@@ -133,7 +134,11 @@ export const CharacterPickList: ReactTypes.FC<CharacterPickListProps> = optimize
                     right: 0,
                     backgroundColor: '#1A1A1A',
                     padding: 16,
+                    height: 40,
+                    borderRadius: 20,
                     borderTop: '1px solid rgba(255,255,255,0.08)',
+                    display: 'flex',
+                    alignItems: 'center',
                 }}>
                     <Button onPress={handleConfirm} kind="Primary" size="medium" className="w-full">
                         {I18nTexts.confirm}

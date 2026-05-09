@@ -70,9 +70,14 @@ const calculateImageStyle = (
 const CARD_W = 114;
 const CARD_H = 160;
 
+// selected 态下图片区缩小尺寸（对齐 app characterImageSelect: 96×142）
+const SELECTED_IMG_W = 96;
+const SELECTED_IMG_H = 142;
+
 export const CharacterCard: ReactTypes.FC<Props> = optimize(({
     showOwnerTag,
     showScriptTag,
+    cardType = CharacterCardEnum.rect,
     id,
     isSelected,
     onPress,
@@ -84,19 +89,25 @@ export const CharacterCard: ReactTypes.FC<Props> = optimize(({
         return { data, dataState: data && { ...data.state } };
     }, [id]);
 
-    const { name, honorary, currentFigure, isOwner, fromScript, figureBackground, imgStyle } = useMemo(() => {
+    const { name, honorary, currentFigure, isOwner, fromScript, figureBackground, imgStyle, selectedImgStyle } = useMemo(() => {
         const bg = reactiveState.dataState?.currentFigureSkin?.backgroundColor ?? '#e27a7f';
         const fig = reactiveState.dataState?.currentFigure ?? null;
         const owner = Boolean(reactiveState.data?.state.isOwner);
         const script = Boolean(reactiveState.data?.attrs?.fromScript);
 
         let style = null;
+        let selStyle = null;
         if (fig) {
-            const faceInfo = FileUtils.getImageFaceInfo(fig.visual, { top: 0.25, left: 0.29, right: 0.29 });
+            const faceInfo = FileUtils.getImageFaceInfo(fig.visual, { top: 0.2625, left: 0.2895, right: 0.2895 });
             const imgW = fig.visual.width ?? 1080;
             const imgH = fig.visual.height ?? 1920;
             style = calculateImageStyle(
                 CARD_W, CARD_H, imgW, imgH,
+                faceInfo.face,
+                faceInfo.rect.left, faceInfo.rect.right, faceInfo.rect.top, faceInfo.rect.bottom,
+            );
+            selStyle = calculateImageStyle(
+                SELECTED_IMG_W, SELECTED_IMG_H, imgW, imgH,
                 faceInfo.face,
                 faceInfo.rect.left, faceInfo.rect.right, faceInfo.rect.top, faceInfo.rect.bottom,
             );
@@ -110,117 +121,205 @@ export const CharacterCard: ReactTypes.FC<Props> = optimize(({
             fromScript: script,
             figureBackground: bg,
             imgStyle: style,
+            selectedImgStyle: selStyle,
         };
     }, [reactiveState.data, reactiveState.dataState]);
 
-    return (
-        <button
-            type="button"
-            onClick={onPress}
-            style={{
-                width: CARD_W,
-                height: CARD_H,
-                borderRadius: 20,
-                overflow: 'hidden',
-                position: 'relative',
-                backgroundColor: figureBackground,
-                border: isSelected ? '2px solid #fff' : '2px solid transparent',
-                padding: isSelected ? 4 : 0,
-                cursor: 'pointer',
-                flexShrink: 0,
-                display: 'flex',
-                flexDirection: 'column',
-            }}
-        >
-            {/* image */}
-            <div style={{ position: 'relative', flex: 1, overflow: 'hidden', borderRadius: 16 }}>
-                {currentFigure && imgStyle ? (
-                    <img
-                        src={currentFigure.visual.uri}
-                        alt={name}
-                        style={{
-                            position: 'absolute',
-                            width: imgStyle.width,
-                            height: imgStyle.height,
-                            left: imgStyle.left,
-                            top: imgStyle.top,
-                            objectFit: 'contain',
-                        }}
-                    />
-                ) : (
-                    <div style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}>
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5">
-                            <circle cx="12" cy="8" r="4" />
-                            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                        </svg>
-                    </div>
-                )}
+    // halfRound 选中态：整体 opacity 0.3（对齐 app roundCharacterImageContainerSelected）
+    const isHalfRound = cardType === CharacterCardEnum.halfRound;
+    const containerOpacity = isHalfRound && isSelected ? 0.3 : 1;
 
-                {/* tags */}
-                <div style={{ position: 'absolute', top: 6, left: 6, display: 'flex', gap: 4 }}>
-                    {isOwner && showOwnerTag && (
-                        <span style={{
-                            fontSize: 10, fontWeight: 600, color: '#fff',
-                            backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 10,
-                            padding: '2px 6px',
-                        }}>
-                            {I18nTexts.ownerTag}
-                        </span>
+    // rect 选中态：图片区加 padding + border，图片缩小
+    const imageContainerStyle: React.CSSProperties = isSelected && !isHalfRound
+        ? {
+            width: CARD_W,
+            height: CARD_H,
+            borderRadius: 20,
+            overflow: 'hidden',
+            position: 'relative',
+            background: 'none',
+            border: '3px solid #fff',
+            padding: 7,
+            boxSizing: 'border-box',
+            cursor: 'pointer',
+            flexShrink: 0,
+        }
+        : {
+            width: CARD_W,
+            height: CARD_H,
+            borderRadius: 20,
+            overflow: 'hidden',
+            position: 'relative',
+            background: 'none',
+            border: '3px solid transparent',
+            cursor: 'pointer',
+            flexShrink: 0,
+        };
+
+    const activeImgStyle = isSelected && !isHalfRound ? selectedImgStyle : imgStyle;
+    const innerImgContainerStyle: React.CSSProperties = {
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        borderRadius: 16,
+        overflow: 'hidden',
+    };
+
+    return (
+        // 外层容器：宽度固定 114，marginBottom 16（对齐 app characterCard）
+        <div style={{ width: CARD_W, marginBottom: 16, opacity: containerOpacity }}>
+            {/* 图片区：button 只负责图片，不含文字 */}
+            <button
+                type="button"
+                onClick={onPress}
+                style={imageContainerStyle}
+            >
+                <div style={innerImgContainerStyle}>
+                    {/* 背景色层：对齐 app rectImageBackgroundContainer / roundImageBackgroundContainer */}
+                    {isHalfRound ? (
+                        // halfRound：只有底部半圆背景
+                        <div style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            width: '100%',
+                            height: 130,
+                            backgroundColor: figureBackground,
+                            borderTopLeftRadius: 57,
+                            borderTopRightRadius: 57,
+                        }} />
+                    ) : (
+                        // rect：全覆盖背景
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            backgroundColor: figureBackground,
+                        }} />
                     )}
-                    {fromScript && showScriptTag && (
-                        <span style={{
-                            fontSize: 10, fontWeight: 600, color: '#fff',
-                            backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 10,
-                            padding: '2px 6px',
+
+                    {/* 角色图片：有 face 数据用精确定位，否则降级为 contain 居中（对齐 app LockAreaImage 兜底行为） */}
+                    {currentFigure ? (
+                        activeImgStyle ? (
+                            <img
+                                src={currentFigure.visual.uri}
+                                alt={name}
+                                style={{
+                                    position: 'absolute',
+                                    width: activeImgStyle.width,
+                                    height: activeImgStyle.height,
+                                    left: activeImgStyle.left,
+                                    top: activeImgStyle.top,
+                                    objectFit: 'contain',
+                                }}
+                            />
+                        ) : (
+                            <img
+                                src={currentFigure.visual.uri}
+                                alt={name}
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'contain',
+                                    objectPosition: 'center top',
+                                }}
+                            />
+                        )
+                    ) : null}
+
+                    {/* 标签：左上角，对齐 app tag 样式 */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, display: 'flex' }}>
+                        {isOwner && showOwnerTag && (
+                            <span style={{
+                                fontSize: 12,
+                                fontWeight: 600,
+                                color: 'rgba(255,255,255,0.4)',
+                                backgroundColor: '#1A1A1A',
+                                borderBottomRightRadius: 12,
+                                width: 36,
+                                height: 20,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                paddingLeft: 2,
+                            }}>
+                                {I18nTexts.ownerTag}
+                            </span>
+                        )}
+                        {fromScript && showScriptTag && (
+                            <span style={{
+                                fontSize: 12,
+                                fontWeight: 600,
+                                color: '#fff',
+                                backgroundColor: '#0d0d0d',
+                                borderBottomRightRadius: 12,
+                                width: 36,
+                                height: 20,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}>
+                                {I18nTexts.scriptTag}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* checkmark：右上角，对齐 app checkMarkContainer（36×36，bgPage 背景） */}
+                    {isSelected && (
+                        <div style={{
+                            position: 'absolute',
+                            top: 10,
+                            right: 0,
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            backgroundColor: '#0d0d0d',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 3,
                         }}>
-                            {I18nTexts.scriptTag}
-                        </span>
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M4 10l4.5 4.5 7.5-8" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </div>
                     )}
                 </div>
+            </button>
 
-                {/* checkmark */}
-                {isSelected && (
-                    <div style={{
-                        position: 'absolute', top: 6, right: 6,
-                        width: 20, height: 20, borderRadius: '50%',
-                        backgroundColor: '#fff',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M2 6l3 3 5-5" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    </div>
-                )}
-            </div>
-
-            {/* name */}
-            <div style={{
-                padding: '4px 6px 6px',
-                backgroundColor: 'rgba(0,0,0,0.4)',
-            }}>
+            {/* 文字区：在卡片外部下方，对齐 app characterInfo */}
+            <div style={{ marginTop: 4, textAlign: 'center' }}>
                 <div style={{
-                    fontSize: 14, fontWeight: 600, color: '#fff',
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    textAlign: 'center',
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: '#fff',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    opacity: isHalfRound && isSelected ? 0.3 : 1,
                 }}>
                     {name}
                 </div>
                 {honorary ? (
                     <div style={{
-                        fontSize: 11, color: 'rgba(255,255,255,0.5)',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        textAlign: 'center', marginTop: 1,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: 'rgba(255,255,255,0.4)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginTop: 2,
+                        opacity: isHalfRound && isSelected ? 0.3 : 1,
                     }}>
                         {honorary}
                     </div>
                 ) : null}
             </div>
-        </button>
+        </div>
     );
 });

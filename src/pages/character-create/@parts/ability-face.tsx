@@ -22,9 +22,10 @@ export const AbilityFace: ReactTypes.FC<Props> = optimize(({ currentAbility, eva
     }, [evaluation, sumPercent]);
 
     useEffect(() => {
-        const hasValue = !!finalEvaluation;
-        const hadValue = !!previousEvaluation.current;
+        const hasValue = finalEvaluation !== null && finalEvaluation !== '';
+        const hadValue = previousEvaluation.current !== null && previousEvaluation.current !== '';
 
+        // 从无值变成有值时触发浮现动画（对齐 app Animated.parallel）
         if (hasValue && !hadValue) {
             setVisible(true);
             setAnimating(false);
@@ -55,6 +56,8 @@ export const AbilityFace: ReactTypes.FC<Props> = optimize(({ currentAbility, eva
                     style={{
                         alignItems: 'center',
                         marginBottom: -30,
+                        minWidth: 100,
+                        maxWidth: 158,
                         display: 'flex',
                         flexDirection: 'column',
                         opacity: animating ? 1 : 0,
@@ -93,12 +96,17 @@ export const AbilityFace: ReactTypes.FC<Props> = optimize(({ currentAbility, eva
                     width: '100%',
                     height: '100%',
                     borderRadius: '50%',
-                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    backgroundColor: '#000',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                 }}>
-                    <span style={{ fontSize: 48 }}>🌟</span>
+                    {/* 对齐 app ASSETS.Lottie.regularFace 兜底笑脸 */}
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                        <circle cx="28" cy="32" r="5" fill="#fff" />
+                        <circle cx="52" cy="32" r="5" fill="#fff" />
+                        <path d="M26 50c4 6 24 6 28 0" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+                    </svg>
                 </div>
             )}
         </div>

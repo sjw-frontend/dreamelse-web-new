@@ -79,6 +79,7 @@ export const CreateForm = optimize(() => {
 
     const containerHeight = useMemo(() => {
         const count = reactiveState.abilities.length;
+        // 对齐 app：count * 44 + (count-1) * 8 + 20，44 = tag height(36) + gap(8)
         return count * 44 + (count - 1) * 8 + 20;
     }, [reactiveState.abilities.length]);
 
@@ -100,6 +101,7 @@ export const CreateForm = optimize(() => {
         }}>
             <div style={{
                 flex: 1,
+                minHeight: 0,
                 overflowY: scrollEnabled ? 'auto' : 'hidden',
                 paddingBottom: 16,
             }}>
@@ -120,8 +122,8 @@ export const CreateForm = optimize(() => {
                     ))}
                 </div>
 
-                {/* CharacterDesc */}
-                <div style={{ marginTop: 16 }}>
+                {/* CharacterDesc — 对齐 app desc: borderWidth 0 */}
+                <div style={{ marginTop: 16, width: '100%', marginBottom: 16 }}>
                     <textarea
                         value={reactiveState.desc}
                         maxLength={Settings.descMaxLength}
@@ -138,7 +140,7 @@ export const CreateForm = optimize(() => {
                             width: '100%',
                             minHeight: 80,
                             background: 'rgba(255,255,255,0.06)',
-                            border: '1px solid rgba(255,255,255,0.1)',
+                            border: 'none',
                             borderRadius: 12,
                             padding: '10px 14px',
                             color: '#EDEDED',
@@ -152,7 +154,8 @@ export const CreateForm = optimize(() => {
                 </div>
             </div>
 
-            <div style={{ width: '100%', paddingBottom: 16 }}>
+            {/* 对齐 app bottomContainer: alignItems center, Button 撑满 */}
+            <div style={{ width: '100%', paddingBottom: 16, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <Button
                     kind="Black"
                     disabled={!reactiveState.allowSubmit}

@@ -94,7 +94,7 @@ export const AbilityBar: ReactTypes.FC<Props> = optimize(({
             style={{
                 position: 'absolute',
                 left: 0,
-                top: rankPosition * 52,
+                top: rankPosition * 44,
                 transition: 'top 0.5s cubic-bezier(0.34,1.56,0.64,1)',
             }}
         >
@@ -125,6 +125,9 @@ export const AbilityBar: ReactTypes.FC<Props> = optimize(({
                     userSelect: 'none',
                     overflow: 'hidden',
                     whiteSpace: 'nowrap',
+                    lineHeight: '28px',
+                    boxSizing: 'border-box',
+                    height: 44,
                 }}
             >
                 <span style={{

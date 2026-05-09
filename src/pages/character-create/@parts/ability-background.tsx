@@ -86,7 +86,8 @@ export const AbilityBackground: ReactTypes.FC<Props> = optimize(({ currentAbilit
                         id="abilityGradient"
                         cx={cx}
                         cy={cy}
-                        r={Math.max(rx, ry)}
+                        rx={rx}
+                        ry={ry}
                         gradientUnits="userSpaceOnUse"
                     >
                         <stop offset="0%" stopColor={gradientColors.inner} />

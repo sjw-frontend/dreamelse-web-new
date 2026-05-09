@@ -23,6 +23,9 @@ export const CharacterCreatePage: ReactTypes.FC = withAuth(optimize(() => {
         previewDataWritable: ctrl.state.previewDataWritable,
     }));
 
+    // 对齐 app closeMode 参数：'close'（X 图标）| 'text'（跳过文字）
+    const closeMode = ctrl.state.route?.params?.closeMode ?? 'close';
+
     useListenEvent(ctrl, 'submitFail', msg => {
         popup.openOkDialog({ title: I18nTexts.createFail, content: msg });
     });
@@ -61,7 +64,7 @@ export const CharacterCreatePage: ReactTypes.FC = withAuth(optimize(() => {
                     </>
                 )}
 
-                {/* Header — 挑选/定制 tab */}
+                {/* Header — 挑选/定制 tab，对齐 app header 布局 */}
                 {!state.isCreate && (
                     <div style={{
                         display: 'flex',
@@ -69,20 +72,22 @@ export const CharacterCreatePage: ReactTypes.FC = withAuth(optimize(() => {
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         paddingLeft: 24,
-                        paddingRight: 16,
-                        paddingTop: 16,
+                        paddingRight: 24,
+                        paddingTop: 4,
                         paddingBottom: 4,
                         flexShrink: 0,
                         position: 'relative',
                         zIndex: 10,
                     }}>
+                        {/* 左侧 tab：挑选 / 创造 */}
                         <div style={{ display: 'flex', flexDirection: 'row', gap: 16, alignItems: 'center' }}>
                             <button
                                 type="button"
                                 onClick={toPick}
                                 style={{
                                     background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                                    fontSize: 30, fontWeight: !state.isCustom ? 600 : 500,
+                                    fontSize: 30,
+                                    fontWeight: !state.isCustom ? 600 : 500,
                                     color: !state.isCustom ? '#EDEDED' : 'rgba(0,0,0,0.3)',
                                 }}
                             >
@@ -93,7 +98,8 @@ export const CharacterCreatePage: ReactTypes.FC = withAuth(optimize(() => {
                                 onClick={toCustom}
                                 style={{
                                     background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                                    fontSize: 30, fontWeight: state.isCustom ? 600 : 500,
+                                    fontSize: 30,
+                                    fontWeight: state.isCustom ? 600 : 500,
                                     color: state.isCustom ? '#EDEDED' : 'rgba(0,0,0,0.3)',
                                 }}
                             >
@@ -101,25 +107,72 @@ export const CharacterCreatePage: ReactTypes.FC = withAuth(optimize(() => {
                             </button>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                        {/* 右侧按钮区：对齐 app buttonsContainer，绝对定位 right 16 */}
+                        <div style={{
+                            position: 'absolute',
+                            right: 16,
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 12,
+                            zIndex: 10,
+                        }}>
+                            {/* 编辑按钮：对齐 app editButtonContainer + iconEditWhite */}
                             <button
                                 type="button"
-                                onClick={ctrl.goBack}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#EDEDED' }}
+                                onClick={ctrl.toCreate}
+                                style={{
+                                    background: 'none', border: 'none', cursor: 'pointer',
+                                    padding: '0 12px',
+                                    color: '#EDEDED',
+                                    display: 'flex', alignItems: 'center',
+                                }}
                             >
-                                <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                                    <rect width="36" height="36" rx="18" fill="rgba(255,255,255,0.1)" />
-                                    <path d="M13 13l10 10M23 13L13 23" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                                 </svg>
                             </button>
+
+                            {/* closeMode === 'text'：跳过按钮 */}
+                            {closeMode === 'text' && (
+                                <button
+                                    type="button"
+                                    onClick={ctrl.goBack}
+                                    style={{
+                                        background: 'none', border: 'none', cursor: 'pointer',
+                                        color: '#EDEDED', fontSize: 16, padding: 0,
+                                    }}
+                                >
+                                    {I18nTexts.skip}
+                                </button>
+                            )}
+
+                            {/* closeMode === 'close'：X 图标，对齐 app closeBlack 36×36 */}
+                            {closeMode === 'close' && (
+                                <button
+                                    type="button"
+                                    onClick={ctrl.goBack}
+                                    style={{
+                                        background: 'none', border: 'none', cursor: 'pointer',
+                                        padding: 0, color: '#EDEDED',
+                                        width: 36, height: 36,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    }}
+                                >
+                                    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                                        <rect width="36" height="36" rx="18" fill="rgba(255,255,255,0.1)" />
+                                        <path d="M13 13l10 10M23 13L13 23" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                    </svg>
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
 
-                {/* create 模式 — 预览角色信息 */}
+                {/* isCreate 模式：对齐 app 渲染 CharacterEditor，web 暂用预览卡片 */}
                 {state.isCreate && (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                        {/* 返回按钮 */}
                         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: '12px 16px', flexShrink: 0 }}>
                             <button
                                 type="button"
@@ -136,7 +189,6 @@ export const CharacterCreatePage: ReactTypes.FC = withAuth(optimize(() => {
                             <div style={{ width: 24 }} />
                         </div>
 
-                        {/* 预览内容 */}
                         <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 32px' }}>
                             {state.previewData && (
                                 <div style={{
