@@ -1,5 +1,7 @@
 // @ts-nocheck
 import { useReactive, useRegisterRenderController } from '$/hooks';
+import { LockAreaImage } from '$/uis';
+import { FileUtils } from '$/utils';
 import { optimize } from '$/view';
 import { ScriptRoleEditorController } from './script-role-editor-controller';
 
@@ -87,10 +89,18 @@ export const ScriptRoleEditor = optimize(({
                             backgroundColor: 'rgba(255,255,255,0.1)',
                             overflow: 'hidden', cursor: 'pointer',
                         }} onClick={() => ctrl.pickCharacter?.()}>
-                            {reactiveState.characterInfo?.state?.currentFigure?.visual?.uri ? (
-                                <img src={reactiveState.characterInfo.state.currentFigure.visual.uri}
-                                    alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
+                            {reactiveState.characterInfo?.state?.currentFigure?.visual ? (() => {
+                                const visual = reactiveState.characterInfo.state.currentFigure.visual;
+                                const faceInfo = FileUtils.getImageFaceInfo(visual, { top: 0.1178, left: 0.2917, right: 0.2917 });
+                                return (
+                                    <LockAreaImage
+                                        image={visual}
+                                        area={faceInfo?.face}
+                                        rect={faceInfo?.rect}
+                                        style={{ width: 80, height: 80, borderRadius: 40 }}
+                                    />
+                                );
+                            })() : (
                                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5">
                                         <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />

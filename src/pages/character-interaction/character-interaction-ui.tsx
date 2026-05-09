@@ -1,8 +1,10 @@
 // @ts-nocheck
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useReactive, useRegisterRenderController, useZoneController } from '$/hooks';
+import { LockAreaImage } from '$/uis';
 import { Pressable } from '$/uis/primitives';
 import { ExpandablePanel } from '$/uis/expandable-panel';
+import { FileUtils } from '$/utils';
 import { optimize } from '$/view';
 import { CharacterController } from '$/controllers';
 import { CharacterEnums } from '$/enums';
@@ -311,18 +313,28 @@ const PanelHeader = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInt
         dataState: ctrl.state.data?.state,
     }));
 
-    const avatarUri = state.dataState?.behavior?.currentFigureVisual?.uri ?? null;
+    const avatar = state.dataState?.behavior?.currentFigureVisual ?? null;
     const characterName = state.dataState?.name ?? '';
     const status = state.dataState?.behavior?.status ?? '';
     const location = state.dataState?.behavior?.location ?? '';
+
+    const avatarFaceInfo = useMemo(
+        () => avatar && FileUtils.getImageFaceInfo(avatar, { left: 0.25, right: 0.25, top: 0.25 }),
+        [avatar],
+    );
 
     return (
         <div className="flex flex-row items-center gap-2 px-6 pb-2">
             {/* 24×24 avatar */}
             <Pressable onPress={ctrl.toDetails}>
                 <div className="w-6 h-6 rounded-full bg-white/20 overflow-hidden shrink-0 border-2 border-bg-card">
-                    {avatarUri
-                        ? <img src={avatarUri} alt={characterName} className="w-full h-full object-cover" />
+                    {avatar
+                        ? <LockAreaImage
+                            image={avatar}
+                            area={avatarFaceInfo?.face}
+                            rect={avatarFaceInfo?.rect}
+                            style={{ width: 24, height: 24, borderRadius: 12 }}
+                          />
                         : <div className="w-full h-full flex items-center justify-center">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white/60">
                                 <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
@@ -453,7 +465,16 @@ export const CharacterInteractionPage = optimize(() => {
 
     const bgColor = state.dataState?.behavior?.backgroundColor ?? null;
     const bgImage = state.dataState?.behavior?.backgroundImage?.uri ?? null;
-    const figureVisual = state.dataState?.behavior?.currentFigureVisual?.uri ?? null;
+    const figureVisual = state.dataState?.behavior?.currentFigureVisual ?? null;
+
+    const figureHeight = state.chatExpanded ? '45%' : '70%';
+
+    const avatarFaceInfo = useMemo(
+        () =>
+            figureVisual &&
+            FileUtils.getImageFaceInfo(figureVisual, { top: 0, bottom: 0 }, true),
+        [figureVisual],
+    );
 
     const handleToggle = useCallback((expanded: boolean) => {
         ctrl.togglePanel(expanded);
@@ -481,11 +502,18 @@ export const CharacterInteractionPage = optimize(() => {
                 {/* Character figure */}
                 {figureVisual && (
                     <div className="absolute inset-0 pointer-events-none flex items-start justify-center overflow-hidden">
-                        <img
-                            src={figureVisual}
-                            alt="character"
-                            className="object-contain opacity-90"
-                            style={{ maxHeight: state.chatExpanded ? '45%' : '70%', marginTop: 48, transition: 'max-height 0.3s ease' }}
+                        <LockAreaImage
+                            image={figureVisual}
+                            area={avatarFaceInfo?.face}
+                            rect={avatarFaceInfo?.rect}
+                            style={{
+                                width: '100%',
+                                height: figureHeight,
+                                marginTop: 48,
+                                transition: 'height 0.3s ease',
+                                overflow: 'visible',
+                                opacity: 0.9,
+                            }}
                         />
                     </div>
                 )}

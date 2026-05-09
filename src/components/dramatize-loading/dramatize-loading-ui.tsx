@@ -1,14 +1,15 @@
 // @ts-nocheck
 import { useState, useMemo, useEffect, useRef } from 'react';
 import lottie from 'lottie-web';
-import { Image } from '$/uis/primitives';
+import { LockAreaImage } from '$/uis';
 import { ASSETS } from '$/consts';
+import { FileUtils } from '$/utils';
 import { optimize } from '$/view';
 import { SpotlightText } from '$/components/dramatize-engine/@uis';
 
 export type RoleInfo = {
     name: string;
-    avatarUri: string | null;
+    avatar: { uri: string; width: number; height: number; face?: { leftTop: { x: number; y: number }; rightBottom: { x: number; y: number } } | null } | null;
     title: string;
     description?: string;
     secret?: string;
@@ -237,13 +238,17 @@ export const DramatizeLoading = optimize((props: Props) => {
                                     justifyContent: 'center',
                                 }}
                             >
-                                {selectedRole.avatarUri ? (
-                                    <Image
-                                        source={{ uri: selectedRole.avatarUri }}
-                                        contentFit="cover"
-                                        style={{ width: '100%', height: '100%' }}
-                                    />
-                                ) : (
+                                {selectedRole.avatar ? (() => {
+                                    const faceInfo = FileUtils.getImageFaceInfo(selectedRole.avatar, { left: 0.25, right: 0.25, top: 0.25 });
+                                    return (
+                                        <LockAreaImage
+                                            image={selectedRole.avatar}
+                                            area={faceInfo?.face}
+                                            rect={faceInfo?.rect}
+                                            style={{ width: 246, height: 246, borderRadius: 123 }}
+                                        />
+                                    );
+                                })() : (
                                     <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5">
                                         <circle cx="12" cy="8" r="4" />
                                         <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
@@ -432,13 +437,17 @@ export const DramatizeLoading = optimize((props: Props) => {
                                             alt=""
                                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                         />
-                                    ) : role?.avatarUri ? (
-                                        <Image
-                                            source={{ uri: role.avatarUri }}
-                                            contentFit="cover"
-                                            style={{ width: '100%', height: '100%' }}
-                                        />
-                                    ) : (
+                                    ) : role?.avatar ? (() => {
+                                        const avatarInfo = FileUtils.getImageFaceInfo(role.avatar, { left: 0.25, right: 0.25, top: 0.25 });
+                                        return (
+                                            <LockAreaImage
+                                                image={role.avatar}
+                                                area={avatarInfo?.face}
+                                                rect={avatarInfo?.rect}
+                                                style={{ width: Settings.iconSize, height: Settings.iconSize, borderRadius: Settings.iconSize / 2 }}
+                                            />
+                                        );
+                                    })() : (
                                         <div
                                             style={{
                                                 width: '100%',

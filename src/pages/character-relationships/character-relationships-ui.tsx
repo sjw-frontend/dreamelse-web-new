@@ -1,5 +1,7 @@
 // @ts-nocheck
 import { useReactive, useRegisterRenderController } from '$/hooks';
+import { LockAreaImage } from '$/uis';
+import { FileUtils } from '$/utils';
 import { optimize } from '$/view';
 import { Pressable } from '$/uis/primitives';
 import { CharacterRelationshipsController } from './character-relationships-controller';
@@ -46,7 +48,12 @@ export const CharacterRelationshipsPage = optimize(() => {
     );
 
     const characterName = state.dataState?.name ?? '';
-    const avatarUri = state.dataState?.currentFigure?.visual?.uri ?? null;
+    const characterAvatar = state.dataState?.currentFigure?.visual ?? null;
+
+    const centralFaceInfo = useMemo(
+        () => characterAvatar && FileUtils.getImageFaceInfo(characterAvatar, { top: 0.25, left: 0.25, right: 0.25 }),
+        [characterAvatar],
+    );
 
     // Pan/zoom state
     const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
@@ -208,8 +215,13 @@ export const CharacterRelationshipsPage = optimize(() => {
                             style={{ left: cx - 32, top: cy - 32, zIndex: 10 }}
                         >
                             <div className="w-16 h-16 rounded-full bg-bg-card border-2 border-accent overflow-hidden">
-                                {avatarUri ? (
-                                    <img src={avatarUri} alt={characterName} className="w-full h-full object-cover" />
+                                {characterAvatar ? (
+                                    <LockAreaImage
+                                        image={characterAvatar}
+                                        area={centralFaceInfo?.face}
+                                        rect={centralFaceInfo?.rect}
+                                        style={{ width: 64, height: 64, borderRadius: 32 }}
+                                    />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-white/10">
                                         <svg width="28" height="28" viewBox="0 0 28 28" fill="none">

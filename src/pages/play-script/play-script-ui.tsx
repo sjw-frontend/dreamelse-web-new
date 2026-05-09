@@ -46,7 +46,7 @@ export const PlayScriptPage = optimize(() => {
         () =>
             state.roles?.map((item: ScriptTypes.FrozenRoleInfo) => ({
                 name: item.state.characterInfo?.state.name ?? '',
-                avatarUri: item.state.characterInfo?.state.currentFigure?.visual?.uri ?? null,
+                avatar: item.state.characterInfo?.state.currentFigure?.visual ?? null,
                 title: item.state.identities[0]?.label ?? '',
                 description: item.state.backgroundDesc ?? '',
                 secret: item.state.secret ?? '',

@@ -232,6 +232,7 @@ export const ScriptPreparePlayPage: ReactTypes.FC = withAuth(optimize(() => {
                                     height: `${imgStyle.height}px`,
                                     left: `${imgStyle.left}px`,
                                     top: `${imgStyle.top}px`,
+                                    maxWidth: 'none',
                                 }}
                             />
                         ) : (

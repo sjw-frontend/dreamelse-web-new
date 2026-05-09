@@ -213,6 +213,7 @@ export const CharacterCard: ReactTypes.FC<Props> = optimize(({
                                     left: activeImgStyle.left,
                                     top: activeImgStyle.top,
                                     objectFit: 'contain',
+                                    maxWidth: 'none',
                                 }}
                             />
                         ) : (

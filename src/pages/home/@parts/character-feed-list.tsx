@@ -1,5 +1,6 @@
 import { useInjectRenderController, useReactive } from '$/hooks';
-import { Image } from '$/uis/primitives';
+import { LockAreaImage } from '$/uis';
+import { FileUtils } from '$/utils';
 import { cn } from '$/utils/cn';
 import { optimize } from '$/view';
 import { HomeController } from '../home-controller';
@@ -23,8 +24,10 @@ export const CharacterFeedList = optimize(() => {
             {/* Character avatar horizontal scroll */}
             <div className="h-20 shrink-0 overflow-x-auto scrollbar-none">
                 <div className="flex flex-row items-center justify-center gap-2.5 h-full px-4 min-w-full">
-                    {state.playWithCharacterList.map((item: { id: string; image: { uri: string } }) => {
+                    {state.playWithCharacterList.map((item: { id: string; image: { uri: string; width: number; height: number; face?: { leftTop: { x: number; y: number }; rightBottom: { x: number; y: number } } | null } }) => {
                         const isActive = item.id === state.currentPlayWithId;
+                        const innerSize = isActive ? 54 : 60;
+                        const faceInfo = FileUtils.getImageFaceInfo(item.image, { top: 0.25, left: 0.25, right: 0.25 });
                         return (
                             <button
                                 key={item.id}
@@ -45,10 +48,11 @@ export const CharacterFeedList = optimize(() => {
                                             isActive ? 'w-[54px] h-[54px]' : 'w-[60px] h-[60px]',
                                         )}
                                     >
-                                        <Image
-                                            source={item.image}
-                                            contentFit="cover"
-                                            className="w-full h-full"
+                                        <LockAreaImage
+                                            image={item.image}
+                                            area={faceInfo.face}
+                                            rect={faceInfo.rect}
+                                            style={{ width: '100%', height: '100%' }}
                                         />
                                     </div>
                                 </div>

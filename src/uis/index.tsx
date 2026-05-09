@@ -2,7 +2,7 @@
 // Web stub for $/uis — maps RN-specific components to web equivalents
 
 export { Pressable as AsyncPressable } from './primitives/pressable';
-export { Image as LockAreaImage } from './primitives/image';
+export { LockAreaImage } from './primitives/lock-area-image';
 export { Dialog } from './dialog/dialog-ui';
 export type { DialogProps, DialogButton } from './dialog/dialog-ui';
 

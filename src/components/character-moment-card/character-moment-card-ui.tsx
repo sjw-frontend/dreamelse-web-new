@@ -249,6 +249,7 @@ export const CharacterMomentCard: ReactTypes.FC<Props> = optimize(({
                                             left: avatarImgStyle.left,
                                             top: avatarImgStyle.top,
                                             objectFit: 'contain',
+                                            maxWidth: 'none',
                                         }}
                                     />
                                 ) : (
