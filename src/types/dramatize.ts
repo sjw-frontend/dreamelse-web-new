@@ -845,6 +845,7 @@ export declare namespace DramatizeTypes {
 
     type DirectorAnimation = LibTypes.VarDefine<{
         style: DirectorAnimationStyle,
+        fromStyle?: BaseDirectorStyle | null,
         readonly durationMS?: number | null,
         readonly repeat?: UnitAnimatedRepeat | null,
     }>;

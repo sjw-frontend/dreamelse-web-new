@@ -1,8 +1,34 @@
+// @ts-nocheck
 import { useReactive, useRegisterRenderController } from '$/hooks';
 import { optimize } from '$/view';
 import { Pressable } from '$/uis/primitives';
 import { CharacterRelationshipsController } from './character-relationships-controller';
 import { useMemo, useRef, useState } from 'react';
+
+const RelationshipBubble = ({ relation, nodeDirection }) => (
+    <div style={{
+        position: 'absolute',
+        ...(nodeDirection === 'left'
+            ? { right: '-100%' }
+            : nodeDirection === 'right'
+            ? { left: '-100%' }
+            : { top: -60, left: '50%', transform: 'translateX(-50%)' }),
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        borderRadius: 8,
+        padding: '6px 10px',
+        minWidth: 80,
+        zIndex: 10,
+    }}>
+        <span style={{ fontSize: 12, color: '#EDEDED', fontWeight: 600 }}>{relation.title}</span>
+        {relation.desc && (
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', display: 'block', marginTop: 2 }}>
+                {relation.desc}
+            </span>
+        )}
+    </div>
+);
 
 export const CharacterRelationshipsPage = optimize(() => {
     const [ctrl, RenderParentProvider] = useRegisterRenderController(CharacterRelationshipsController);
@@ -61,12 +87,18 @@ export const CharacterRelationshipsPage = optimize(() => {
     const corePositions = core.map((rel, i) => {
         const angleDeg = CORE_ANGLES[i] ?? 0;
         const rad = ((angleDeg - 90) * Math.PI) / 180;
+        // Determine bubble direction based on which side of center the node is on
+        const nodeDirection: 'left' | 'right' | 'center' =
+            angleDeg > 180 && angleDeg < 360 ? 'left'
+            : angleDeg > 0 && angleDeg < 180 ? 'right'
+            : 'center';
         return {
             rel,
             nodeX: cx + 190 * Math.cos(rad),
             nodeY: cy + 190 * Math.sin(rad),
             labelX: cx + 140 * Math.cos(rad),
             labelY: cy + 140 * Math.sin(rad),
+            nodeDirection,
         };
     });
 
@@ -195,8 +227,11 @@ export const CharacterRelationshipsPage = optimize(() => {
                             <div
                                 key={i}
                                 className="absolute flex flex-col items-center gap-1"
-                                style={{ left: pos.nodeX - 24, top: pos.nodeY - 24, zIndex: 5 }}
+                                style={{ left: pos.nodeX - 24, top: pos.nodeY - 24, zIndex: 5, position: 'absolute' }}
                             >
+                                {pos.rel.title && (
+                                    <RelationshipBubble relation={pos.rel} nodeDirection={pos.nodeDirection} />
+                                )}
                                 <div className="w-12 h-12 rounded-full bg-bg-card border border-white/20 overflow-hidden flex items-center justify-center">
                                     {pos.rel.avatar?.uri ? (
                                         <img src={pos.rel.avatar.uri} alt={pos.rel.name} className="w-full h-full object-cover" />

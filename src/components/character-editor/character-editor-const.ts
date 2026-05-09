@@ -1,0 +1,33 @@
+export const I18nTexts = {
+    gender: '性别',
+    species: '物种',
+    relation: '关系',
+    timbre: '音色',
+    artStyle: '画风',
+    descPlaceholder: '输入Ta的性格，经历，爱好，讨厌的东西，愿望，能力等信息...',
+    relationWithMe: 'Ta与我的关系',
+    whatItThinkMe: 'Ta对我的印象',
+    cancel: '取消',
+    ok: '确认',
+    other: '其它',
+    relationNamePlaceholder: '如我, 恋人, 家人, 朋友等',
+    relationRegardPlaceholder: '请输入Ta对我的印象',
+    namePlaceholder: 'Ta的名字',
+    honoraryPlaceholder: 'Ta的称号',
+    generateImage: '生成形象',
+    confirm: '就是Ta了!',
+    public: '公开',
+    private: '私密',
+    descHint: '有非法内容，请修改',
+    confirmExitTitle: '确认退出角色编辑',
+    confirmExitContent: '退出编辑后将删除该角色信息，且无法找回。',
+    confirmExitOkButton: '仍要退出',
+} as const;
+
+export const Settings = {
+    descMaxLength: 1000,
+    nameMaxLength: 6,
+    honoraryMaxLength: 8,
+    relationNameMaxLength: 10,
+    relationRegardMaxLength: 100,
+} as const;

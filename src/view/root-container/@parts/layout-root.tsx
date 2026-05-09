@@ -7,6 +7,7 @@ import { NavbarController } from '../../components/@controllers';
 import { Navbar } from '../../components/navbar/navbar-ui';
 import { GlobalEffects } from './global-effects';
 import { Popup } from './popup';
+import { ScreenView } from '../../screen-view';
 
 export const LayoutRoot: ReactTypes.FCWC = optimize(({ children }) => {
     const navbarController = useRenderController(null, NavbarController);
@@ -18,9 +19,15 @@ export const LayoutRoot: ReactTypes.FCWC = optimize(({ children }) => {
         <PopupHelperContext value={popup.helper}>
             <GlobalEffects />
             <div className="flex flex-col h-full relative">
-                {children}
+                <ScreenView>{children}</ScreenView>
             </div>
-            <Popup {...popup.state} />
+            <Popup
+                {...popup.state}
+                onCloseSingleInputDialog={popup.helper.closeSingleInputDialog}
+                onCloseDualInputDialog={popup.helper.closeDualInputDialog}
+                onCloseMultilineInputDialog={popup.helper.closeMultilineInputDialog}
+                onCloseImageViewer={popup.helper.closeImageViewer}
+            />
             <Navbar />
         </PopupHelperContext>
     );

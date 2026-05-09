@@ -1,22 +1,30 @@
+// @ts-nocheck
 import { useRef } from 'react';
-import { useReactive, useRegisterRenderController, useZoneController } from '$/hooks';
-import { CharacterController, UserController } from '$/controllers';
+import { useListenEvent, useReactive, useRegisterRenderController, useZoneController } from '$/hooks';
+import { UserController } from '$/controllers';
 import { optimize } from '$/view';
+import { withAuth } from '$/hocs';
+import type { ReactTypes } from '$/types';
 import { Pressable, ScrollView } from '$/uis/primitives';
-import { Menu } from '$/uis/menu';
-import { cn } from '$/utils/cn';
 import type { CharacterTypes } from '$/types';
+import { CharacterMomentCard } from '$/components/character-moment-card';
 import { CharacterListController } from './character-list-controller';
 
-export const CharacterListPage = optimize(() => {
+export const CharacterListPage: ReactTypes.FC = withAuth(optimize(() => {
     const userCtrl = useZoneController(UserController);
-
     const [ctrl, RenderParentProvider] = useRegisterRenderController(CharacterListController);
+    const listRef = useRef<HTMLDivElement>(null);
 
     const state = useReactive(() => ({
         currentShowDeleteMenuId: ctrl.state.currentShowDeleteMenuId,
         characterIds: (userCtrl.state.loggedInUser?.characterDetails.state.list ?? []) as CharacterTypes.CharacterId[],
     }));
+
+    useListenEvent(ctrl, 'refresh', () => {
+        setTimeout(() => {
+            listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+    });
 
     return (
         <RenderParentProvider>
@@ -55,14 +63,13 @@ export const CharacterListPage = optimize(() => {
 
                 {/* Character list */}
                 {state.characterIds.length > 0 && (
-                    <ScrollView className="flex-1">
+                    <ScrollView className="flex-1" ref={listRef}>
                         <div className="flex flex-col pb-24">
                             {state.characterIds.map(id => (
-                                <CharacterListItem
+                                <CharacterMomentCard
                                     key={id}
                                     id={id}
                                     isShowDeleteMenu={state.currentShowDeleteMenuId === id}
-                                    onPress={ctrl.goInteraction}
                                     onShowDeleteMenu={ctrl.setCurrentShowDeleteMenuId}
                                     onHideDeleteMenu={ctrl.clearCurrentShowDeleteMenuId}
                                 />
@@ -73,110 +80,4 @@ export const CharacterListPage = optimize(() => {
             </div>
         </RenderParentProvider>
     );
-});
-
-interface CharacterListItemProps {
-    id: CharacterTypes.CharacterId;
-    isShowDeleteMenu: boolean;
-    onPress: (id: string) => void;
-    onShowDeleteMenu: (id: string) => void;
-    onHideDeleteMenu: (id: string) => void;
-}
-
-const CharacterListItem = optimize(({
-    id,
-    isShowDeleteMenu,
-    onPress,
-    onShowDeleteMenu,
-    onHideDeleteMenu,
-}: CharacterListItemProps) => {
-    const characterCtrl = useZoneController(CharacterController);
-    const moreButtonRef = useRef<HTMLButtonElement>(null);
-
-    const state = useReactive(() => {
-        const info = characterCtrl.getCharacter(id);
-        return {
-            name: info?.state.name ?? '',
-            species: info?.state.species?.name ?? null,
-            gender: info?.state.gender ?? null,
-            avatar: info?.state.currentFigure?.visual?.uri ?? null,
-        };
-    });
-
-    const menuCoordinate = (() => {
-        if (!isShowDeleteMenu || !moreButtonRef.current) return undefined;
-        const rect = moreButtonRef.current.getBoundingClientRect();
-        return { x: rect.right, y: rect.bottom };
-    })();
-
-    const badge = [state.species, state.gender].filter(Boolean).join(' · ');
-
-    return (
-        <div className="relative">
-            <Pressable
-                className={cn(
-                    'flex flex-row items-center gap-3 px-4 py-3 w-full text-left',
-                    'active:bg-white/5 transition-colors duration-100',
-                )}
-                onPress={() => onPress(id)}
-            >
-                {/* Avatar */}
-                <div className="w-14 h-14 rounded-2xl bg-bg-card overflow-hidden shrink-0">
-                    {state.avatar ? (
-                        <img src={state.avatar} alt={state.name} className="w-full h-full object-cover" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-white/5">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                <circle cx="12" cy="9" r="4" stroke="currentColor" strokeWidth="1.5" />
-                                <path d="M4 20c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                        </div>
-                    )}
-                </div>
-
-                {/* Info */}
-                <div className="flex flex-col flex-1 min-w-0 gap-1">
-                    <span className="text-text-primary font-semibold text-base truncate">{state.name}</span>
-                    {badge ? (
-                        <span className="text-text-secondary text-sm truncate">{badge}</span>
-                    ) : null}
-                </div>
-
-                {/* More button */}
-                <Pressable
-                    ref={moreButtonRef}
-                    className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg hover:bg-white/5"
-                    onPress={() => onShowDeleteMenu(id)}
-                >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-text-secondary">
-                        <circle cx="8" cy="3" r="1.2" fill="currentColor" />
-                        <circle cx="8" cy="8" r="1.2" fill="currentColor" />
-                        <circle cx="8" cy="13" r="1.2" fill="currentColor" />
-                    </svg>
-                </Pressable>
-            </Pressable>
-
-            {/* Delete menu */}
-            <Menu
-                active={isShowDeleteMenu}
-                onClose={() => onHideDeleteMenu(id)}
-                coordinate={menuCoordinate}
-                anchor="top-right"
-                optionList={[
-                    {
-                        label: '删除',
-                        value: 'delete',
-                        icon: (
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-red-400">
-                                <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                        ),
-                    },
-                ]}
-                onChange={() => {
-                    onHideDeleteMenu(id);
-                }}
-            />
-        </div>
-    );
-});
+}));

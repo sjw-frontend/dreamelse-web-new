@@ -61,8 +61,13 @@ export class SplashController extends BaseRenderController<
                             ...params,
                             ...firstRoute.params,
                         });
-                    } else {
+                    } else if (this.#userController.state.loggedInUser) {
                         this.#routerController.resetToHome(params);
+                    } else {
+                        this.#routerController.resetTo(
+                            RouterEnums.RouteName.Login,
+                            params,
+                        );
                     }
                     unwatch();
                 }

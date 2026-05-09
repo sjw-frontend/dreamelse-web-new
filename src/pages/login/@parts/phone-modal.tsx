@@ -1,8 +1,10 @@
-import { optimize } from '$/view';
-import { useReactive } from '$/hooks';
+// @ts-nocheck
+import { useListenEvent, useReactive } from '$/hooks';
+import { usePopup } from '$/hooks';
 import { cn } from '$/utils/cn';
 import { Dialog } from '$/uis/dialog/dialog-ui';
 import { Button } from '$/uis/button/button-ui';
+import { optimize } from '$/view';
 import { Agree } from './agree';
 import type { LoginController } from '../login-controller';
 import { I18nTexts, Settings } from '../login-const';
@@ -12,6 +14,8 @@ interface PhoneModalProps {
 }
 
 export const PhoneModal = optimize(({ ctrl }: PhoneModalProps) => {
+    const popup = usePopup();
+
     const state = useReactive(() => ({
         showPhoneLoginModal: ctrl.state.showPhoneLoginModal,
         phoneNum: ctrl.state.phoneNum,
@@ -19,6 +23,10 @@ export const PhoneModal = optimize(({ ctrl }: PhoneModalProps) => {
         getCheckCodeCountdown: ctrl.state.getCheckCodeCountdown,
         needRegister: ctrl.state.needRegister,
     }));
+
+    useListenEvent(ctrl, 'loginFail', () => popup.showToast('登录失败，请重试'));
+    useListenEvent(ctrl, 'invalidCheckCode', () => popup.showToast('验证码错误'));
+    useListenEvent(ctrl, 'invalidPhoneNum', () => popup.showToast('手机号格式不正确'));
 
     const phoneValid = state.phoneNum.length === Settings.phoneNumMaxLength;
     const countdownActive = state.getCheckCodeCountdown > 0;

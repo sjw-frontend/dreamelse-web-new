@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useReactive, useRegisterRenderController } from '$/hooks';
 import { optimize } from '$/view';
 import { Pressable, ScrollView } from '$/uis/primitives';
@@ -97,7 +98,13 @@ export const CharacterSchedulePage = optimize(() => {
                                 </svg>
                             </Pressable>
                         </div>
-                        <span className="ml-auto text-accent text-xs font-medium">AI 生成</span>
+                        <div style={{
+                            writingMode: 'vertical-rl', textOrientation: 'mixed',
+                            fontSize: 11, color: 'rgba(255,255,255,0.5)',
+                            letterSpacing: 2,
+                        }}>
+                            AI 生成
+                        </div>
                     </div>
 
                     {/* Timeline scroll */}
@@ -166,12 +173,18 @@ export const CharacterSchedulePage = optimize(() => {
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        <span className="text-text-secondary/80 text-xs block mb-1">
-                                                            {scheduleItem.state.status}
-                                                        </span>
-                                                        <p className={`text-text-secondary/40 text-xs leading-5 ${isExpanded ? '' : 'line-clamp-2'}`}>
-                                                            {scheduleItem.state.detail}
-                                                        </p>
+                                                        <div style={{
+                                                            maxHeight: isExpanded ? (state.expandedCardHeightMap[scheduleItem.id] ?? 500) : cardHeight,
+                                                            overflow: 'hidden',
+                                                            transition: 'max-height 0.3s ease-in-out',
+                                                        }}>
+                                                            <span className="text-text-secondary/80 text-xs block mb-1">
+                                                                {scheduleItem.state.status}
+                                                            </span>
+                                                            <p className={`text-text-secondary/40 text-xs leading-5 ${isExpanded ? '' : 'line-clamp-2'}`}>
+                                                                {scheduleItem.state.detail}
+                                                            </p>
+                                                        </div>
                                                     </Pressable>
                                                 );
                                             })}

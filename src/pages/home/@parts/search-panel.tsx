@@ -1,6 +1,6 @@
 import { useInjectRenderController, useReactive } from '$/hooks';
 import { Search } from '$/uis/search/search-ui';
-import { ScriptWaterfall } from '$/components/script-waterfall/script-waterfall-ui';
+import { ScriptWaterfallV2 } from '$/components/script-waterfall-v2/script-waterfall-v2-ui';
 import { cn } from '$/utils/cn';
 import { optimize } from '$/view';
 import { useWaterfallContentWidth } from '../@com/use-waterfall-content-width';
@@ -44,7 +44,7 @@ export const SearchPanel = optimize(() => {
             </div>
 
             {/* Search results waterfall */}
-            <ScriptWaterfall
+            <ScriptWaterfallV2
                 scriptIds={state.searchScriptIds}
                 itemContentWidth={contentWidth}
                 onEndReached={ctrl.requestSearch}

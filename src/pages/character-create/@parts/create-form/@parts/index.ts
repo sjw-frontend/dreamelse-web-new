@@ -1,2 +1,1 @@
-// UI stubs — to be implemented
-export {};
+export { AbilityBar } from './ability-bar';

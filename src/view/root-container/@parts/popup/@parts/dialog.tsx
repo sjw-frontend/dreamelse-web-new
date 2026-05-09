@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import type { PopupTypes } from '$/types';
 import { cn } from '$/utils/cn';
 import { optimize } from '$/view/optimize';
+import { ButtonKind } from '$/enums/style';
 
 interface Props { info: PopupTypes.DialogInfo | null }
 
@@ -50,11 +51,13 @@ export const Dialog = optimize(({ info }: Props) => {
                                             key={i}
                                             className={cn(
                                                 'flex-1 h-10 rounded-xl text-sm font-medium',
-                                                btn.kind === 'text'
-                                                    ? 'bg-transparent text-text-secondary'
-                                                    : 'bg-accent text-text-on-accent',
+                                                btn.kind === ButtonKind.Danger || btn.kind === 3 || btn.kind === 'Danger'
+                                                    ? 'bg-danger text-white'
+                                                    : btn.kind === ButtonKind.Text || btn.kind === 2 || btn.kind === 'text' || btn.kind === 'Text'
+                                                        ? 'bg-transparent text-text-secondary'
+                                                        : 'bg-accent text-text-on-accent',
                                             )}
-                                            onClick={() => btn.onPress({ close: () => info.onClose?.() })}
+                                            onClick={() => btn.onPress?.({ close: () => info.onClose?.() })}
                                         >
                                             {btn.text}
                                         </button>

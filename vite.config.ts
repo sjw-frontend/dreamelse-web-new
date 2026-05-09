@@ -105,12 +105,16 @@ const reflectMetadataPatchPlugin = (): Plugin => ({
 });
 const rnStubPlugin = (): Plugin => {
     const navStubPath = path.resolve(__dirname, 'src/stubs/react-navigation-native-stub.ts');
+    const rnStubPath = path.resolve(__dirname, 'src/stubs/react-native-stub.js');
     return {
         name: 'rn-stub',
         enforce: 'pre',
         resolveId(id) {
             if (id === '@react-navigation/native') {
                 return navStubPath;
+            }
+            if (id === 'react-native') {
+                return rnStubPath;
             }
             if (rnPackages.includes(id)) {
                 return `\0rn-stub:${id}`;
@@ -164,9 +168,9 @@ export default defineConfig({
             { find: '$/effects',       replacement: path.resolve(__dirname, 'src/effects') },
             { find: '$/errors',        replacement: path.resolve(__dirname, 'src/errors') },
             { find: '$/uis',           replacement: path.resolve(__dirname, 'src/uis') },
-            { find: '$/components',          replacement: path.resolve(__dirname, 'src/components') },
-            { find: '$/component-controllers', replacement: path.resolve(__dirname, 'src/component-controllers') },
-            { find: '$/pages',                 replacement: path.resolve(__dirname, 'src/pages') },
+            { find: '$/component-controllers', replacement: path.resolve(__dirname, 'src/component-controllers/index.ts') },
+            { find: '$/components',    replacement: path.resolve(__dirname, 'src/components') },
+            { find: '$/pages',         replacement: path.resolve(__dirname, 'src/pages') },
             { find: '$/global-symbol', replacement: path.resolve(__dirname, 'src/types/@global-symbol') },
         ],
     },

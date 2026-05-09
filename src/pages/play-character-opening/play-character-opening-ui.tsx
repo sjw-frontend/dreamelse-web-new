@@ -1,11 +1,20 @@
+// @ts-nocheck
+import { useEffect } from 'react';
+import { DramatizeEngineController } from '$/component-controllers';
 import { useReactive, useRegisterRenderController } from '$/hooks';
-import { ActivityIndicator } from '$/uis/primitives';
 import { Button } from '$/uis/button/button-ui';
 import { optimize } from '$/view';
+import { DramatizeEngine } from '$/components/dramatize-engine/dramatize-engine-ui';
+import { DramatizeLoading } from '$/components/dramatize-loading/dramatize-loading-ui';
 import { PlayCharacterOpeningController } from './play-character-opening-controller';
 
 export const PlayCharacterOpeningPage = optimize(() => {
     const [ctrl, RenderParentProvider] = useRegisterRenderController(PlayCharacterOpeningController);
+    const [engineCtrl, EngineProvider] = useRegisterRenderController(DramatizeEngineController);
+
+    useEffect(() => {
+        ctrl.setRelatedControllers({ dramatizeEngineCtrl: engineCtrl });
+    }, []);
 
     const state = useReactive(() => ({
         showLoading: ctrl.state.showLoading,
@@ -14,37 +23,31 @@ export const PlayCharacterOpeningPage = optimize(() => {
 
     return (
         <RenderParentProvider>
-            <div className="relative w-full h-full bg-bg-page overflow-hidden">
+            <EngineProvider>
+                <div className="relative w-full h-full bg-black overflow-hidden">
 
-                {/* Engine placeholder */}
-                <div className="absolute inset-0 bg-bg-page flex items-center justify-center">
-                    {state.showLottie && (
-                        <div className="flex flex-col items-center gap-4">
-                            <ActivityIndicator size="large" color="#ABFF1A" />
-                            <span className="text-text-secondary text-sm">加载中…</span>
-                        </div>
-                    )}
-                </div>
+                    {/* DramatizeEngine */}
+                    <DramatizeEngine />
 
-                {/* Loading overlay */}
-                {state.showLoading && !state.showLottie && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30">
-                        <ActivityIndicator size="large" color="#ABFF1A" />
+                    {/* DramatizeLoading */}
+                    <DramatizeLoading
+                        show={state.showLoading}
+                        kind="default"
+                        showLottie={state.showLottie}
+                    />
+
+                    {/* 跳过按钮 */}
+                    <div className="absolute top-4 right-4 z-20">
+                        <Button
+                            onPress={ctrl.skip}
+                            kind="Blur"
+                            size="small"
+                        >
+                            跳过
+                        </Button>
                     </div>
-                )}
-
-                {/* Skip button — top right */}
-                <div className="absolute top-4 right-4 z-20">
-                    <Button
-                        onPress={ctrl.toDetails}
-                        kind="Blur"
-                        size="small"
-                        className="bg-white/15 backdrop-blur-sm text-white hover:bg-white/25 rounded-full px-4"
-                    >
-                        跳过
-                    </Button>
                 </div>
-            </div>
+            </EngineProvider>
         </RenderParentProvider>
     );
 });

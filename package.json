@@ -28,6 +28,7 @@
         "idb-keyval": "^6.0.0",
         "inversify": "^7.0.0",
         "lodash": "^4.17.0",
+        "lottie-web": "^5.13.0",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "react-error-boundary": "^4.0.0",

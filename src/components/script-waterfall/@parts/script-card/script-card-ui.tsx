@@ -18,7 +18,8 @@ type Props = {
     scene?: string;
 };
 
-const OPTIMAL_WH_RATIO = 1080 / 1920; // 0.5625
+const OPTIMAL_WH_RATIO = 1.5; // height = width * 1.5，对齐 app 版 VISUAL.OptimalWHRatio
+const OPTIMAL_ASPECT_RATIO = `1 / ${OPTIMAL_WH_RATIO}`; // CSS aspectRatio = width/height = 1/1.5
 
 // float2percent: converts pixel ratio to percentage string (matches RN MathUtils.float2percent)
 const f2p = (n: number) => `${(n * 100).toFixed(4)}%`;
@@ -55,7 +56,7 @@ export const ScriptCard = optimize((props: Props) => {
         // Single role: centered
         const roleStyle = {
             width: item.contentWidth * (240 / 183),
-            aspectRatio: OPTIMAL_WH_RATIO,
+            aspectRatio: OPTIMAL_ASPECT_RATIO,
             position: 'absolute' as const,
             zIndex: 100,
             left: '50%',
@@ -65,7 +66,7 @@ export const ScriptCard = optimize((props: Props) => {
         // Two roles: front (index 0) large left, back (index 1) smaller right
         const frontRoleStyle = {
             width: item.contentWidth * (340 / 183),
-            aspectRatio: OPTIMAL_WH_RATIO,
+            aspectRatio: OPTIMAL_ASPECT_RATIO,
             position: 'absolute' as const,
             zIndex: 100,
             left: f2p(-102 / 183),
@@ -74,7 +75,7 @@ export const ScriptCard = optimize((props: Props) => {
 
         const backRoleStyle = {
             width: item.contentWidth * (240 / 183),
-            aspectRatio: OPTIMAL_WH_RATIO,
+            aspectRatio: OPTIMAL_ASPECT_RATIO,
             position: 'absolute' as const,
             zIndex: 90,
             right: f2p(-92 / 183),
@@ -126,8 +127,8 @@ export const ScriptCard = optimize((props: Props) => {
 
     // Cover image: prefer backgroundImage (PGC composite) over cover
     const coverUri = sceneInfo.backgroundImage?.uri ?? sceneInfo.cover?.uri ?? null;
-    // Only render role images when no backgroundImage
-    const coverRoles = sceneInfo.backgroundImage ? [] : (sceneInfo.coverRoles ?? []);
+    // Always render role images (same as app version)
+    const coverRoles = sceneInfo.coverRoles ?? [];
 
     return (
         <div

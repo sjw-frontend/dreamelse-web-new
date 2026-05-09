@@ -25,7 +25,21 @@ const useWebRoute = () => {
     if (!match) return null;
     const name = pathToRouteName(state.location.pathname);
     if (!name) return null;
-    return { name, key: match.id, params: match.params as Record<string, string> };
+
+    // Parse search params — ids is JSON-encoded array, value is a string
+    const searchParams = new URLSearchParams(state.location.search);
+    const idsRaw = searchParams.get('ids');
+    const valueRaw = searchParams.get('value');
+    const ids = idsRaw ? (() => { try { return JSON.parse(idsRaw); } catch { return undefined; } })() : undefined;
+    const value = valueRaw != null ? (valueRaw === 'true' ? true : valueRaw === 'false' ? false : valueRaw) : undefined;
+
+    const params: Record<string, unknown> = {
+        ...(match.params as Record<string, string>),
+        ...(ids !== undefined ? { ids } : {}),
+        ...(value !== undefined ? { value } : {}),
+    };
+
+    return { name, key: match.id, params };
 };
 
 export const ScreenView = ({ children }: { children: ReactNode }) => (

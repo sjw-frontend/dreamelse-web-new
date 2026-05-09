@@ -93,8 +93,9 @@ export const ExpandablePanel = optimize(({
                     animate={{ height: expanded ? '60vh' : 0 }}
                     transition={{ duration: 0.3, ease: 'easeOut' }}
                     initial={false}
+                    style={{ display: 'flex', flexDirection: 'column' }}
                 >
-                    <div className="h-[60vh] overflow-y-auto px-4">
+                    <div style={{ height: '60vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                         {children}
                     </div>
                 </motion.div>

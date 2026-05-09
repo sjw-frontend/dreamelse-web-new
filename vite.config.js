@@ -154,6 +154,7 @@ export default defineConfig({
             { find: '$/effects', replacement: path.resolve(__dirname, 'src/effects') },
             { find: '$/errors', replacement: path.resolve(__dirname, 'src/errors') },
             { find: '$/uis', replacement: path.resolve(__dirname, 'src/uis') },
+            { find: '$/component-controllers', replacement: path.resolve(__dirname, 'src/component-controllers/index.ts') },
             { find: '$/components', replacement: path.resolve(__dirname, 'src/components') },
             { find: '$/pages', replacement: path.resolve(__dirname, 'src/pages') },
             { find: '$/global-symbol', replacement: path.resolve(__dirname, 'src/types/@global-symbol') },

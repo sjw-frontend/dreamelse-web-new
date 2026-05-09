@@ -84,7 +84,7 @@ export const CharacterStatsPage = optimize(() => {
                             {stats.abilities.map((ability: CharacterTypes.Ability) => (
                                 <div
                                     key={ability.id}
-                                    className="bg-white rounded-2xl px-3 py-1.5 flex flex-row items-center justify-between"
+                                    className="bg-bg-card rounded-2xl px-3 py-1.5 flex flex-row items-center justify-between"
                                 >
                                     <div className="flex flex-row items-center gap-1.5">
                                         <span className="text-xl">{ability.emoji}</span>
@@ -107,11 +107,11 @@ export const CharacterStatsPage = optimize(() => {
                                     {stats.skills.map((skill: CharacterTypes.Skill) => (
                                         <div
                                             key={skill.id}
-                                            className="bg-white rounded-2xl px-4 py-4 flex flex-col items-center justify-center gap-2 shrink-0"
+                                            className="bg-bg-card rounded-2xl px-4 py-4 flex flex-col items-center justify-center gap-2 shrink-0"
                                             style={{ minWidth: 160 }}
                                         >
                                             <span className="text-black font-bold text-xl text-center">{skill.name}</span>
-                                            <div className="border border-black rounded-full px-2 py-0.5">
+                                            <div className="border border-text-primary rounded-full px-2 py-0.5">
                                                 <span className="text-black text-xs font-bold">{skill.levelText}</span>
                                             </div>
                                         </div>

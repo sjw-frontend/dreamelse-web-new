@@ -19,7 +19,7 @@ export const CharacterTimbreListPage = optimize(() => {
         <RenderParentProvider>
             <div className="flex flex-col h-full bg-bg-card">
                 {/* Header */}
-                <div className="flex flex-row items-center px-4 pt-4 pb-2 shrink-0 border-b border-white/5">
+                <div className="flex flex-row items-center px-4 pt-4 pb-2 shrink-0" style={{ borderBottom: '0.5px solid rgba(11,20,38,0.13)' }}>
                     <Pressable
                         onPress={ctrl.handleBack}
                         className="w-9 h-9 flex items-center justify-center"
@@ -41,7 +41,8 @@ export const CharacterTimbreListPage = optimize(() => {
                                 <Pressable
                                     key={timbre.id}
                                     onPress={() => ctrl.selectTimbre(timbre)}
-                                    className="flex flex-row items-center gap-3 mx-4 py-4 border-b border-white/5"
+                                    className="flex flex-row items-center gap-3 mx-4 py-4"
+                                    style={{ borderBottom: '0.5px solid rgba(11,20,38,0.13)' }}
                                 >
                                     {/* Icon with play overlay */}
                                     <div className="w-15 h-15 rounded-xl overflow-hidden relative shrink-0" style={{ width: 60, height: 60 }}>

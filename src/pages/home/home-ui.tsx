@@ -1,4 +1,4 @@
-import { useReactive, useRegisterRenderController } from '$/hooks';
+import { useNavbarRectState, useReactive, useRegisterRenderController } from '$/hooks';
 import { optimize } from '$/view';
 import { HomeController } from './home-controller';
 import { TopNavBar } from './@parts/top-nav-bar';
@@ -8,6 +8,7 @@ import { CharacterFeedList } from './@parts/character-feed-list';
 
 export const HomePage = optimize(() => {
     const [ctrl, RenderParentProvider] = useRegisterRenderController(HomeController);
+    const navbarRect = useNavbarRectState();
 
     const state = useReactive(() => ({
         openSearch: ctrl.state.openSearch,
@@ -17,7 +18,7 @@ export const HomePage = optimize(() => {
 
     return (
         <RenderParentProvider>
-            <div className="flex flex-col h-full bg-bg-page overflow-hidden">
+            <div className="flex flex-col bg-bg-page overflow-hidden" style={{ height: navbarRect.y || '100%' }}>
                 <TopNavBar />
                 {state.openSearch ? (
                     <SearchPanel />

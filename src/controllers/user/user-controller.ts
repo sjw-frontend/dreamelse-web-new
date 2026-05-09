@@ -40,6 +40,12 @@ export class UserController extends BaseZoneController<State, InternalState> {
     );
 
     #init() {
+        this.#apiService.addEventListener('illegalToken', () => {
+            if (this.internal.loggedInUser) {
+                this.logout();
+            }
+        });
+
         this.watch(
             () => this.internal.loggedInUser,
             async loggedInUser => {

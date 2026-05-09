@@ -154,18 +154,6 @@ export class HomeController extends BaseRenderController<State, InternalState> {
         );
 
         this.watch(
-            () => this.internal.routeFocused,
-            (routeFocused, _, unwatch) => {
-                if (routeFocused === true) {
-                    if (!this.#userController.state.loggedInUser) {
-                        this.#routerController.toLogin();
-                    }
-                    unwatch();
-                }
-            },
-        );
-
-        this.watch(
             () =>
                 !!this.#userController.state.loggedInUser &&
                 this.internal.isCharacterMode,
@@ -390,7 +378,8 @@ export class HomeController extends BaseRenderController<State, InternalState> {
     };
 
     public readonly openSearch = () => {
-        if (this.#userController.isLoggedIn()) {
+        const loggedIn = this.#userController.isLoggedIn();
+        if (loggedIn) {
             this.internal.openSearch = true;
         }
     };

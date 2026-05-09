@@ -17,8 +17,12 @@ type CallProxyObj = LibTypes.VarGeneralObj<
     LibTypes.VarGeneralObj<ApiTypes.ProtocolCallMethod>
 >;
 
+type EventMap = LibTypes.FrozenDefine<{
+    illegalToken: () => void,
+}>;
+
 @service()
-export class ApiService extends BaseService {
+export class ApiService extends BaseService<EventMap> {
     public constructor(appService: AppService, fetchService: FetchService) {
         super();
         this.#appService = appService;
@@ -146,6 +150,10 @@ export class ApiService extends BaseService {
 
         if (resRaw.code === ApiEnums.SuccessCode.Success) {
             return resRaw.data;
+        }
+
+        if (resRaw.code === ApiEnums.ErrorCode.IllegalToken) {
+            this.emitEvent('illegalToken');
         }
 
         throw new ApiError(resRaw, {

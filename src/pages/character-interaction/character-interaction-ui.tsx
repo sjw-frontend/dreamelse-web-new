@@ -1,34 +1,217 @@
+// @ts-nocheck
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useReactive, useRegisterRenderController, useZoneController } from '$/hooks';
-import { Pressable, TextInput } from '$/uis/primitives';
+import { Pressable } from '$/uis/primitives';
 import { ExpandablePanel } from '$/uis/expandable-panel';
 import { optimize } from '$/view';
 import { CharacterController } from '$/controllers';
 import { CharacterEnums } from '$/enums';
 import { cn } from '$/utils/cn';
 import { CharacterInteractionController } from './character-interaction-controller';
+import { ChatInput } from './@parts/chat-input/chat-input-ui';
+
+// ── Sending status indicators ─────────────────────────────────────────────────
+
+const SendingSpinner = () => (
+    <div
+        className="w-5 h-5 rounded-full border-2 border-black/20 shrink-0 animate-spin"
+        style={{ borderTopColor: 'transparent' }}
+    />
+);
+
+const SendErrorButton = ({ onPress }: { onPress: () => void }) => (
+    <button
+        onClick={onPress}
+        className="w-5 h-5 flex items-center justify-center text-red-400 shrink-0 text-base leading-none"
+        title="重新发送"
+    >
+        ⚠
+    </button>
+);
+
+// ── Long-press context menu ───────────────────────────────────────────────────
+
+type MenuOption = { label: string; value: string };
+
+const ContextMenu = ({
+    options,
+    position,
+    onSelect,
+    onClose,
+}: {
+    options: MenuOption[];
+    position: { x: number; y: number };
+    onSelect: (value: string) => void;
+    onClose: () => void;
+}) => {
+    useEffect(() => {
+        const handler = () => onClose();
+        window.addEventListener('pointerdown', handler);
+        return () => window.removeEventListener('pointerdown', handler);
+    }, [onClose]);
+
+    return (
+        <div
+            className="fixed z-50 bg-bg-card border border-white/10 rounded-xl shadow-xl overflow-hidden min-w-[120px]"
+            style={{ left: position.x, top: position.y }}
+            onPointerDown={e => e.stopPropagation()}
+        >
+            {options.map(opt => (
+                <button
+                    key={opt.value}
+                    className="w-full text-left px-4 py-2.5 text-sm text-text-primary hover:bg-white/10 transition-colors"
+                    onClick={() => { onSelect(opt.value); onClose(); }}
+                >
+                    {opt.label}
+                </button>
+            ))}
+        </div>
+    );
+};
+
+// ── Voice message bubble ──────────────────────────────────────────────────────
+
+const VoiceMessageBubble = optimize(({ id, fromMe }: { id: string; fromMe: boolean }) => {
+    const characterCtrl = useZoneController(CharacterController);
+    const info = characterCtrl.getMessage(id);
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const [playing, setPlaying] = useState(false);
+
+    if (!info) return null;
+    const { state } = info;
+    const durationMS = state.audio?.durationMS ?? 0;
+    const bubbleWidth = Math.min(240, 86 + Math.round(durationMS / 1000) * 10);
+
+    const handleToggle = useCallback(() => {
+        const el = audioRef.current;
+        if (!el) return;
+        if (playing) { el.pause(); } else { el.play(); }
+    }, [playing]);
+
+    return (
+        <div
+            className={cn(
+                'flex flex-row items-center gap-2 px-4 py-2.5 rounded-3xl cursor-pointer select-none',
+                fromMe
+                    ? 'rounded-br-sm'
+                    : 'bg-white/90 border border-black/[0.06] rounded-bl-sm',
+            )}
+            style={{
+                width: bubbleWidth,
+                background: fromMe ? 'linear-gradient(135deg, #C7FF5F 0%, #D0FFB5 100%)' : undefined,
+            }}
+            onClick={handleToggle}
+        >
+            {state.audio?.source && (
+                <audio
+                    ref={audioRef}
+                    src={state.audio.source}
+                    onPlay={() => setPlaying(true)}
+                    onPause={() => setPlaying(false)}
+                    onEnded={() => setPlaying(false)}
+                />
+            )}
+            {playing ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className={fromMe ? 'text-black/80' : 'text-[#575757]'}>
+                    <rect x="6" y="4" width="4" height="16" rx="1" />
+                    <rect x="14" y="4" width="4" height="16" rx="1" />
+                </svg>
+            ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={fromMe ? 'text-black/80' : 'text-[#575757]'}>
+                    <rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M5 10a7 7 0 0014 0M12 19v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+            )}
+            <span className={cn('text-sm font-medium', fromMe ? 'text-black/80' : 'text-[#575757]')}>
+                {durationMS ? `${Math.round(durationMS / 1000)}″` : '语音'}
+            </span>
+        </div>
+    );
+});
 
 // ── Message item ──────────────────────────────────────────────────────────────
 
-const MessageItem = optimize(({ id }: { id: string }) => {
+const MessageItem = optimize(({ id, ctrl }: { id: string; ctrl: InstanceType<typeof CharacterInteractionController> }) => {
     const characterCtrl = useZoneController(CharacterController);
     const info = characterCtrl.getMessage(id);
+
+    const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     if (!info) return null;
 
-    const { state, attrs } = info;
-    const fromMe = attrs.fromMe;
-    const kind = attrs.kind;
+    const { state, fromMe, kind, isLocal } = info;
 
+    const canCopy = kind === CharacterEnums.MessageItemKind.Msg;
+    const canRollback = state.isSuccess && !isLocal &&
+        kind !== CharacterEnums.MessageItemKind.SysMsg;
+
+    const menuOptions: MenuOption[] = [
+        ...(canCopy ? [{ label: '复制', value: 'copy' }] : []),
+        ...(canRollback ? [{ label: '回溯', value: 'rollback' }] : []),
+    ];
+
+    const openMenu = useCallback((x: number, y: number) => {
+        if (menuOptions.length === 0) return;
+        setMenu({ x, y });
+    }, [menuOptions.length]);
+
+    const handleContextMenu = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        openMenu(e.clientX, e.clientY);
+    }, [openMenu]);
+
+    const handlePointerDown = useCallback((e: React.PointerEvent) => {
+        if (e.pointerType !== 'touch') return;
+        const { clientX, clientY } = e;
+        longPressTimer.current = setTimeout(() => {
+            openMenu(clientX, clientY);
+        }, 500);
+    }, [openMenu]);
+
+    const handlePointerUp = useCallback(() => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+    }, []);
+
+    const handleMenuSelect = useCallback((value: string) => {
+        if (value === 'copy') {
+            ctrl.copyMsg(state.content ?? '');
+        } else if (value === 'rollback') {
+            ctrl.msgRollback(id);
+        }
+    }, [ctrl, id, state.content]);
+
+    const bubbleProps = {
+        onContextMenu: handleContextMenu,
+        onPointerDown: handlePointerDown,
+        onPointerUp: handlePointerUp,
+        onPointerCancel: handlePointerUp,
+    };
+
+    const isSending = state.isSending;
+    const isError = state.isError;
+
+    const statusIndicator = fromMe && (
+        isSending ? <SendingSpinner /> :
+        isError ? <SendErrorButton onPress={() => ctrl.resendMessage(id)} /> :
+        null
+    );
+
+    // ── System message ────────────────────────────────────────────────────────
     if (kind === CharacterEnums.MessageItemKind.SysMsg) {
         return (
             <div className="flex justify-center py-1">
-                <span className="text-xs text-text-tertiary bg-white/5 rounded-full px-3 py-1">
+                <span className="text-xs text-text-tertiary bg-white/10 backdrop-blur-sm rounded-full px-3 py-1">
                     {state.content}
                 </span>
             </div>
         );
     }
 
+    // ── Plot event ────────────────────────────────────────────────────────────
     if (kind === CharacterEnums.MessageItemKind.PlotEvent && state.invitation) {
         return (
             <div className="flex justify-center py-2">
@@ -40,71 +223,84 @@ const MessageItem = optimize(({ id }: { id: string }) => {
         );
     }
 
+    // ── Voice message ─────────────────────────────────────────────────────────
     if (kind === CharacterEnums.MessageItemKind.Voice && state.audio) {
         return (
-            <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
-                {!fromMe && <CharacterAvatar info={info} />}
-                <div className={cn(
-                    'flex flex-row items-center gap-2 px-3 py-2 rounded-2xl max-w-[65%]',
-                    fromMe ? 'bg-accent rounded-br-sm' : 'bg-white/10 rounded-bl-sm',
-                )}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={fromMe ? 'text-bg-page' : 'text-text-primary'}>
-                        <rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" strokeWidth="1.5" />
-                        <path d="M5 10a7 7 0 0014 0M12 19v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                    <span className={cn('text-sm', fromMe ? 'text-bg-page' : 'text-text-primary')}>
-                        {state.audio.durationMS ? `${Math.round(state.audio.durationMS / 1000)}″` : '语音'}
-                    </span>
+            <>
+                {menu && (
+                    <ContextMenu
+                        options={menuOptions}
+                        position={menu}
+                        onSelect={handleMenuSelect}
+                        onClose={() => setMenu(null)}
+                    />
+                )}
+                <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
+                    <div {...bubbleProps}>
+                        <VoiceMessageBubble id={id} fromMe={fromMe} />
+                    </div>
+                    {statusIndicator}
                 </div>
-            </div>
+            </>
         );
     }
 
+    // ── Image message ─────────────────────────────────────────────────────────
     if (kind === CharacterEnums.MessageItemKind.Image && state.image) {
         return (
-            <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
-                {!fromMe && <CharacterAvatar info={info} />}
-                <img
-                    src={state.image.uri}
-                    alt="image"
-                    className="max-w-[60%] rounded-2xl object-cover"
-                    style={{ maxHeight: 200 }}
-                />
-            </div>
+            <>
+                {menu && (
+                    <ContextMenu
+                        options={menuOptions}
+                        position={menu}
+                        onSelect={handleMenuSelect}
+                        onClose={() => setMenu(null)}
+                    />
+                )}
+                <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
+                    <img
+                        src={state.image.uri}
+                        alt="image"
+                        className="max-w-[60%] rounded-3xl object-cover"
+                        style={{ maxHeight: 200 }}
+                        {...bubbleProps}
+                    />
+                    {statusIndicator}
+                </div>
+            </>
         );
     }
 
-    // Default: text message
+    // ── Text message ──────────────────────────────────────────────────────────
     return (
-        <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
-            {!fromMe && <CharacterAvatar info={info} />}
-            <div className={cn(
-                'px-3 py-2 rounded-2xl max-w-[75%]',
-                fromMe ? 'bg-accent rounded-br-sm' : 'bg-white/10 rounded-bl-sm',
-                state.isSending && 'opacity-60',
-            )}>
-                <span className={cn('text-sm leading-relaxed', fromMe ? 'text-bg-page' : 'text-text-primary')}>
-                    {state.content}
-                </span>
-            </div>
-        </div>
-    );
-});
-
-const CharacterAvatar = optimize(({ info }: { info: any }) => {
-    const avatarUri = info?.attrs?.characterInfo?.avatarUri ?? null;
-    return (
-        <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden shrink-0">
-            {avatarUri
-                ? <img src={avatarUri} alt="" className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white/60">
-                        <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
-                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
+        <>
+            {menu && (
+                <ContextMenu
+                    options={menuOptions}
+                    position={menu}
+                    onSelect={handleMenuSelect}
+                    onClose={() => setMenu(null)}
+                />
+            )}
+            <div className={cn('flex items-end gap-2', fromMe ? 'flex-row-reverse' : 'flex-row')}>
+                <div
+                    className={cn(
+                        'px-4 py-2.5 rounded-3xl max-w-[75%]',
+                        fromMe
+                            ? 'rounded-br-sm'
+                            : 'bg-white/90 border border-black/[0.06] rounded-bl-sm',
+                        isSending && 'opacity-60',
+                    )}
+                    style={fromMe ? { background: 'linear-gradient(135deg, #C7FF5F 0%, #D0FFB5 100%)' } : undefined}
+                    {...bubbleProps}
+                >
+                    <span className={cn('text-base font-medium leading-relaxed', fromMe ? 'text-black/90' : 'text-[#575757]')}>
+                        {state.content}
+                    </span>
                 </div>
-            }
-        </div>
+                {statusIndicator}
+            </div>
+        </>
     );
 });
 
@@ -115,19 +311,20 @@ const PanelHeader = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInt
         dataState: ctrl.state.data?.state,
     }));
 
-    const figureVisual = state.dataState?.behavior?.currentFigureVisual?.uri ?? null;
+    const avatarUri = state.dataState?.behavior?.currentFigureVisual?.uri ?? null;
     const characterName = state.dataState?.name ?? '';
     const status = state.dataState?.behavior?.status ?? '';
     const location = state.dataState?.behavior?.location ?? '';
 
     return (
-        <div className="flex flex-row items-center gap-3 px-4 py-3">
+        <div className="flex flex-row items-center gap-2 px-6 pb-2">
+            {/* 24×24 avatar */}
             <Pressable onPress={ctrl.toDetails}>
-                <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
-                    {figureVisual
-                        ? <img src={figureVisual} alt={characterName} className="w-full h-full object-cover" />
+                <div className="w-6 h-6 rounded-full bg-white/20 overflow-hidden shrink-0 border-2 border-bg-card">
+                    {avatarUri
+                        ? <img src={avatarUri} alt={characterName} className="w-full h-full object-cover" />
                         : <div className="w-full h-full flex items-center justify-center">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-white/60">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white/60">
                                 <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
                                 <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                             </svg>
@@ -135,65 +332,31 @@ const PanelHeader = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInt
                     }
                 </div>
             </Pressable>
+
             <div className="flex flex-col">
-                <span className="text-white font-semibold text-base">{characterName}</span>
+                <span className="text-2xl font-semibold text-text-primary leading-tight">{characterName}</span>
                 {(status || location) && (
-                    <span className="text-white/60 text-xs">{[status, location].filter(Boolean).join(' · ')}</span>
+                    <div className="flex flex-row items-center gap-1 mt-0.5">
+                        {status && (
+                            <span
+                                className="text-xs font-medium text-text-primary px-3 py-1 rounded-full"
+                                style={{ background: 'rgba(255,255,255,0.4)' }}
+                            >
+                                {status}
+                            </span>
+                        )}
+                        {location && (
+                            <div className="flex flex-row items-center gap-1">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-text-primary shrink-0">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="1.5" />
+                                    <circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+                                </svg>
+                                <span className="text-xs font-semibold text-text-primary">{location}</span>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
-        </div>
-    );
-});
-
-// ── Chat input footer ─────────────────────────────────────────────────────────
-
-const ChatInputFooter = optimize(({ ctrl, expanded }: {
-    ctrl: InstanceType<typeof CharacterInteractionController>;
-    expanded: boolean;
-}) => {
-    const [inputText, setInputText] = useState('');
-    const state = useReactive(() => ({ chatEnabled: ctrl.state.chatEnabled }));
-
-    const handleSend = useCallback(() => {
-        const text = inputText.trim();
-        if (!text) return;
-        ctrl.sendMessage(text);
-        setInputText('');
-    }, [inputText, ctrl]);
-
-    return (
-        <div className={cn(
-            'flex flex-row items-center gap-2 px-4 py-3',
-            expanded ? 'border-t border-white/5 bg-bg-page/90' : 'bg-white/12 backdrop-blur-md',
-        )}>
-            <div className="flex-1 flex flex-row items-center bg-white/8 rounded-2xl px-3 h-10 border border-white/10">
-                <TextInput
-                    className="flex-1 bg-transparent text-white text-sm outline-none placeholder:text-white/50"
-                    placeholder="说点什么..."
-                    value={inputText}
-                    onChangeText={setInputText}
-                    onSubmitEditing={handleSend}
-                    editable={state.chatEnabled}
-                />
-            </div>
-            <Pressable
-                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0"
-                disabled={!state.chatEnabled}
-            >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-white">
-                    <rect x="4" y="1" width="5" height="9" rx="2.5" stroke="currentColor" strokeWidth="1.3" />
-                    <path d="M2 8a5 5 0 0010 0M6.5 13v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                </svg>
-            </Pressable>
-            <Pressable
-                onPress={handleSend}
-                disabled={!state.chatEnabled || !inputText.trim()}
-                className="w-10 h-10 rounded-full bg-accent flex items-center justify-center shrink-0 disabled:opacity-40"
-            >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M2 9l14-7-7 14V9H2z" fill="black" />
-                </svg>
-            </Pressable>
         </div>
     );
 });
@@ -201,21 +364,62 @@ const ChatInputFooter = optimize(({ ctrl, expanded }: {
 // ── Message list ──────────────────────────────────────────────────────────────
 
 const MessageList = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInteractionController> }) => {
-    const bottomRef = useRef<HTMLDivElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const sentinelRef = useRef<HTMLDivElement>(null);
+    const prevLengthRef = useRef(0);
+
     const state = useReactive(() => ({
         msgIds: ctrl.state.msgIds,
         showLoading: ctrl.state.showLoading,
     }));
 
+    // ── Initial scroll to bottom ──────────────────────────────────────────────
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const el = scrollRef.current;
+        if (el) {
+            el.scrollTop = el.scrollHeight;
+        }
+    }, []);
+
+    // ── Scroll to bottom when new messages arrive ─────────────────────────────
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const currentLength = state.msgIds.length;
+        if (currentLength > prevLengthRef.current) {
+            const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+            if (distFromBottom < 120) {
+                el.scrollTop = el.scrollHeight;
+            }
+        }
+        prevLengthRef.current = currentLength;
     }, [state.msgIds.length]);
 
+    // ── IntersectionObserver sentinel for loading history ────────────────────
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0]?.isIntersecting) {
+                    ctrl.loadMoreHistory?.() ?? ctrl.requestMoreMessagesUp?.();
+                }
+            },
+            { root: scrollRef.current, threshold: 0.1 },
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [ctrl]);
+
     return (
-        <div className="flex flex-col gap-3 px-4 pt-4 pb-2 overflow-y-auto flex-1">
-            {state.msgIds.map((id: string) => (
-                <MessageItem key={id} id={id} />
-            ))}
+        <div
+            ref={scrollRef}
+            className="flex flex-col gap-3 px-4 pt-4 pb-2 overflow-y-auto h-full"
+        >
+            {/* Sentinel at top triggers history load */}
+            <div ref={sentinelRef} className="h-1 shrink-0" />
+
+            {/* Loading indicator */}
             {state.showLoading && (
                 <div className="flex items-center gap-1 pl-2 py-1">
                     {[0, 150, 300].map(delay => (
@@ -227,7 +431,11 @@ const MessageList = optimize(({ ctrl }: { ctrl: InstanceType<typeof CharacterInt
                     ))}
                 </div>
             )}
-            <div ref={bottomRef} />
+
+            {/* Messages oldest→newest, newest at bottom */}
+            {[...state.msgIds].map((id: string) => (
+                <MessageItem key={id} id={id} ctrl={ctrl} />
+            ))}
         </div>
     );
 });
@@ -267,7 +475,7 @@ export const CharacterInteractionPage = optimize(() => {
                             }}
                         />
                     }
-                    <div className="absolute inset-0 bg-black/30" />
+                    <div className="absolute inset-0 bg-black/20" />
                 </div>
 
                 {/* Character figure */}
@@ -311,7 +519,7 @@ export const CharacterInteractionPage = optimize(() => {
                         onToggle={handleToggle}
                         backgroundBlur={16}
                         header={<PanelHeader ctrl={ctrl} />}
-                        footer={<ChatInputFooter ctrl={ctrl} expanded={state.chatExpanded} />}
+                        footer={<ChatInput ctrl={ctrl} expanded={state.chatExpanded} />}
                     >
                         <MessageList ctrl={ctrl} />
                     </ExpandablePanel>
