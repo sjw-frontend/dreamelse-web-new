@@ -127,8 +127,8 @@ export const ScriptCard = optimize((props: Props) => {
 
     // Cover image: prefer backgroundImage (PGC composite) over cover
     const coverUri = sceneInfo.backgroundImage?.uri ?? sceneInfo.cover?.uri ?? null;
-    // Only render role images when no backgroundImage
-    const coverRoles = sceneInfo.backgroundImage ? [] : (sceneInfo.coverRoles ?? []);
+    // Always render role images (same as app version)
+    const coverRoles = sceneInfo.coverRoles ?? [];
 
     return (
         <div
